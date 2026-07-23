@@ -18,6 +18,16 @@ Questo file è la sorgente di verità per il backlog del progetto. Un workflow G
 
 - Ogni elemento ha un ID stabile `NL-<n>`.
 - Le voci sono fonte unica: modificare qui per cambiare lo stato/descrizione; la sync aggiornerà Issues/Milestones.
+
+## Milestone: v0.3 (Advanced features)
+
+- [ ] NL-7: Stream message replay — Supporto per cercare e riprodurre messaggi storici di uno stream (time/range/seq).
+- [ ] NL-8: JetStream consumer management — Creare/modificare/ricreare consumer (pull/ephemeral/durable) dall'interfaccia.
+- [ ] NL-9: Message inspector & schema validation — Visualizzatore avanzato con validazione JSON Schema e preview raw/base64.
+- [ ] NL-10: Export/Import subscriptions — Esporta le subscriptions attive in file e reimport per ripristino rapido.
+- [ ] NL-11: Credential helper UI — Interfaccia per usare file `.creds`/token senza mostrare segreti, gestione sicura delle credenziali.
+- [ ] NL-12: Telemetria e profiling — Raccolta opzionale di metriche d'uso (anonime) per performance e stabilità; toggle opt-in.
+
 # Backlog — nats-lens
 
 Sorgente unica dei todo. Id stabili `NL-n`; spuntare, non cancellare.
