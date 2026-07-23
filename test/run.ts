@@ -7,7 +7,14 @@ import * as path from 'path';
 import { spawn, ChildProcess } from 'child_process';
 import { connect } from 'nats';
 import { loadContexts, redactedLabel } from '../src/core/contexts';
-import { renderPayload, formatMessageLine, isValidSubject } from '../src/core/payload';
+import {
+  renderPayload,
+  formatMessageLine,
+  isValidSubject,
+  subjectMatches,
+  previewPayload,
+} from '../src/core/payload';
+import { parseHeaders } from '../src/core/headers';
 import { NatsClient } from '../src/core/client';
 
 let failures = 0;
@@ -74,6 +81,42 @@ await test('subjects: validation rules', () => {
   assert.ok(!isValidSubject('a.*', false));
 });
 
+// --- headers (NL-14) ---------------------------------------------------------
+await test('headers: parse k=v and k: v, multi-value, skip blanks, report errors', () => {
+  const { headers, errors } = parseHeaders('X-Trace = abc\nRole: admin\nRole: ops\n\n= bad\nnosep');
+  assert.deepStrictEqual(headers['X-Trace'], ['abc']);
+  assert.deepStrictEqual(headers['Role'], ['admin', 'ops']);
+  assert.strictEqual(errors.length, 2); // '= bad' (empty key) + 'nosep' (no separator)
+});
+
+// --- subject matching (NL-15) ------------------------------------------------
+await test('subjects: wildcard matching (* and >)', () => {
+  assert.ok(subjectMatches('a.b.c', 'a.b.c'));
+  assert.ok(subjectMatches('a.*.c', 'a.x.c'));
+  assert.ok(!subjectMatches('a.*.c', 'a.x.y'));
+  assert.ok(subjectMatches('a.>', 'a.b.c.d'));
+  assert.ok(!subjectMatches('a.>', 'a')); // '>' needs at least one trailing token
+  assert.ok(!subjectMatches('a.b', 'a.b.c'));
+  assert.ok(subjectMatches('>', 'anything.here'));
+});
+
+// --- payload preview (NL-16) -------------------------------------------------
+await test('payload: preview truncates large payloads with size note', () => {
+  const small = previewPayload(new TextEncoder().encode('hello'));
+  assert.strictEqual(small.truncated, false);
+  assert.strictEqual(small.text, 'hello');
+  const big = previewPayload(new TextEncoder().encode('x'.repeat(5000)), 100);
+  assert.ok(big.truncated);
+  assert.ok(big.text.length < 5000);
+  assert.ok(/5000/.test(big.text)); // total byte size noted in the preview
+});
+
+await test('payload: message line bounds large payloads (NL-16)', () => {
+  const line = formatMessageLine('big.subj', new TextEncoder().encode('y'.repeat(9000)), undefined, 100);
+  assert.ok(line.includes('troncato'));
+  assert.ok(line.length < 9000);
+});
+
 // --- integration: throwaway nats-server --------------------------------------
 const bin = process.env.NATS_SERVER_BIN || 'nats-server';
 let server: ChildProcess | null = null;
@@ -124,6 +167,17 @@ try {
     client.publish('lens.test.b', '{"n":1}');
     await new Promise((r) => setTimeout(r, 300));
     assert.deepStrictEqual(received.sort(), ['lens.test.a:hello', 'lens.test.b:{"n":1}']);
+  });
+
+  await test('integration: publish carries headers (NL-14)', async () => {
+    const seen: Record<string, string[]> = {};
+    client.subscribe('lens.hdr', (_s, _d, h) => {
+      if (h) for (const [k, v] of h) seen[k] = v;
+    });
+    await new Promise((r) => setTimeout(r, 100));
+    client.publish('lens.hdr', 'x', { 'X-Trace': ['abc'] });
+    await new Promise((r) => setTimeout(r, 300));
+    assert.deepStrictEqual(seen['X-Trace'], ['abc']);
   });
 
   await test('integration: JetStream streams + consumers listing', async () => {

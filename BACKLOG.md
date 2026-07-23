@@ -1,49 +1,39 @@
 # BACKLOG — nats-lens
 
-Questo file è la sorgente di verità per il backlog del progetto. Un workflow GitHub Actions lo sincronizzerà con Issues e Milestones.
+Sorgente unica dei todo. ID stabili `NL-n` (mai riusare un numero). Spuntare `[x]`, non cancellare.
+Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issues/Milestones.
 
-## Milestone: v0.1 (MVP)
+## v0.1 — MVP (fatto)
 
-- [ ] NL-1: Browse JetStream streams — Permettere la navigazione e l'elenco di stream JetStream (nome, soggetti, messaggi recenti).
-- [ ] NL-2: Publish/Subscribe UI — Interfaccia per pubblicare messaggi e creare sottoscrizioni dalla estensione.
-- [ ] NL-3: Request/Reply helper — Helper per inviare request e visualizzare le reply con timeout configurabile.
-
-## Milestone: v0.2 (Stabilità e UX)
-
-- [ ] NL-4: Persistenza delle subscriptions — Salvataggio delle sottoscrizioni attive tra sessioni e indicazione stato nel tree.
-- [ ] NL-5: Render payload migliorato — Migliorare `renderPayload` con preview JSON, testo e fallback binario (test coperti).
-- [ ] NL-6: Test + CI — Aggiungere test automatizzati e workflow CI per `npm run build` e `npm test`.
-
-## Convenzione backlog
-
-- Ogni elemento ha un ID stabile `NL-<n>`.
-- Le voci sono fonte unica: modificare qui per cambiare lo stato/descrizione; la sync aggiornerà Issues/Milestones.
-
-## Milestone: v0.3 (Advanced features)
-
-- [ ] NL-7: Stream message replay — Supporto per cercare e riprodurre messaggi storici di uno stream (time/range/seq).
-- [ ] NL-8: JetStream consumer management — Creare/modificare/ricreare consumer (pull/ephemeral/durable) dall'interfaccia.
-- [ ] NL-9: Message inspector & schema validation — Visualizzatore avanzato con validazione JSON Schema e preview raw/base64.
-- [ ] NL-10: Export/Import subscriptions — Esporta le subscriptions attive in file e reimport per ripristino rapido.
-- [ ] NL-11: Credential helper UI — Interfaccia per usare file `.creds`/token senza mostrare segreti, gestione sicura delle credenziali.
-- [ ] NL-12: Telemetria e profiling — Raccolta opzionale di metriche d'uso (anonime) per performance e stabilità; toggle opt-in.
-
-# Backlog — nats-lens
-
-Sorgente unica dei todo. Id stabili `NL-n`; spuntare, non cancellare.
-
-## v0.2
-
-- [ ] **NL-1 — Browse messaggi di uno stream**: get per sequenza/ultimo per subject, apertura come documento (JSON pretty).
-- [ ] **NL-2 — Publish con headers**: input opzionale `k=v` multipli.
-- [ ] **NL-3 — Riconnessione automatica**: gestire gli eventi di disconnessione del client (oggi la status bar resta "connected" se il server cade).
-
-## v0.3+
-
-- [ ] **NL-4 — Operazioni JetStream con conferma**: purge stream, delete consumer (doppia conferma, mai di default).
-- [ ] **NL-5 — KV / Object Store browser**: bucket KV come tree, get/put valori.
-- [ ] **NL-6 — Monitor `$SYS`**: eventi server (connessioni, ecc.) in un canale dedicato, richiede context con permessi di sistema.
+- [x] **NL-1 — Browse JetStream streams**: elenco stream (nome, soggetti, messaggi/byte) e consumer nel tree.
+- [x] **NL-2 — Publish/Subscribe UI**: pubblicazione messaggi e sottoscrizioni dall'estensione.
+- [x] **NL-3 — Request/Reply helper**: request con timeout, reply aperta come documento.
+- [x] **NL-4 — Test + CI**: unit + integrazione (nats-server usa-e-getta) e workflow CI.
+- [x] **NL-5 — Render payload**: JSON pretty / testo / fallback binario euristico.
 
 ## Rilascio
 
-- [ ] **NL-7 — Publish sul Marketplace**: publisher reale in `package.json`, icona PNG 128px, screenshot/GIF nel README, `vsce publish`.
+- [ ] **NL-6 — Publish sul Marketplace**: pipeline tag-driven pronta (`ci.yml`, allineata ad ansible-vars-lens). Restano: secret `VSCE_PAT`, verifica publisher, screenshot/GIF nel README, tag `vX.Y.Z`.
+
+## v1.2 — Messaging power tools (fatto)
+
+- [x] **NL-14 — Publish con headers**: parsing `k=v` / `k: v` (multi-valore, righe vuote ignorate, errori riportati) e invio reale degli header NATS. Core `parseHeaders()` + `client.publish`; prompt header nel comando publish.
+- [x] **NL-15 — Filtro subject lato client**: `subjectMatches(pattern, subject)` con semantica wildcard NATS (`*` un token, `>` coda); filtro opzionale nel comando subscribe.
+- [x] **NL-16 — Preview payload troncata**: `previewPayload()` limita i messaggi grandi (cap 4000 char nell'Output) con nota sulla dimensione totale.
+
+## v0.2+ — Stabilità e UX
+
+- [ ] **NL-7 — Riconnessione automatica**: gestire gli eventi di disconnessione del client (oggi la status bar resta "connected" se il server cade).
+- [ ] **NL-8 — Persistenza subscriptions**: salvataggio delle sottoscrizioni attive tra sessioni e stato nel tree.
+- [ ] **NL-9 — Operazioni JetStream con conferma**: purge stream, delete consumer (doppia conferma, mai di default).
+
+## v0.3+ — Advanced
+
+- [ ] **NL-10 — KV / Object Store browser**: bucket KV come tree, get/put valori.
+- [ ] **NL-11 — Monitor `$SYS`**: eventi server (connessioni, ecc.) in un canale dedicato; richiede context con permessi di sistema.
+- [ ] **NL-12 — Stream message replay**: cerca/riproduci messaggi storici (time/range/seq), apertura come documento.
+- [ ] **NL-13 — JetStream consumer management**: creare/modificare/eliminare consumer (pull/ephemeral/durable).
+- [ ] **NL-17 — Message inspector & schema validation**: visualizzatore avanzato con validazione JSON Schema e preview raw/base64.
+- [ ] **NL-18 — Export/Import subscriptions**: esporta le subscriptions attive su file e reimport per ripristino rapido.
+- [ ] **NL-19 — Credential helper UI**: usare `.creds`/token senza mostrare segreti, gestione sicura delle credenziali.
+- [ ] **NL-20 — Telemetria opt-in**: metriche d'uso anonime per performance/stabilità, toggle opt-in.

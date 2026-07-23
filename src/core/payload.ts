@@ -23,10 +23,11 @@ export function renderPayload(data: Uint8Array): { text: string; kind: 'json' | 
 export function formatMessageLine(
   subject: string,
   data: Uint8Array,
-  headers?: Iterable<[string, string[]]>
+  headers?: Iterable<[string, string[]]>,
+  maxChars = 4000
 ): string {
   const ts = new Date().toISOString();
-  const { text, kind } = renderPayload(data);
+  const { text, kind } = previewPayload(data, maxChars);
   const hdr = headers
     ? [...headers].map(([k, v]) => `${k}=${v.join(',')}`).join(' ')
     : '';
@@ -39,6 +40,43 @@ function indent(text: string): string {
     .split('\n')
     .map((l) => `  ${l}`)
     .join('\n');
+}
+
+/**
+ * Tests whether `subject` matches a NATS subscription `pattern`.
+ * `*` matches exactly one token; `>` (must be last) matches one or more
+ * trailing tokens. Used to filter a live subscription's Output client-side.
+ */
+export function subjectMatches(pattern: string, subject: string): boolean {
+  const p = pattern.split('.');
+  const s = subject.split('.');
+  for (let i = 0; i < p.length; i++) {
+    const tok = p[i];
+    if (tok === '>') return s.length > i;
+    if (i >= s.length) return false;
+    if (tok === '*') continue;
+    if (tok !== s[i]) return false;
+  }
+  return p.length === s.length;
+}
+
+/**
+ * Renders a payload bounded to `maxChars` for the Output channel, so a huge
+ * message never floods it. Binary payloads are already compact and pass through.
+ */
+export function previewPayload(
+  data: Uint8Array,
+  maxChars = 2000
+): { text: string; truncated: boolean; kind: 'json' | 'text' | 'binary' } {
+  const { text, kind } = renderPayload(data);
+  if (kind === 'binary' || text.length <= maxChars) {
+    return { text, truncated: false, kind };
+  }
+  return {
+    text: `${text.slice(0, maxChars)}\n… (troncato, ${data.byteLength} byte totali)`,
+    truncated: true,
+    kind,
+  };
 }
 
 /** Validates a NATS subject (tokens separated by dots, * and > wildcards). */

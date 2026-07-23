@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
 import { NatsClient, StreamSummary } from './core/client';
-import { formatMessageLine, isValidSubject } from './core/payload';
+import { formatMessageLine, isValidSubject, subjectMatches } from './core/payload';
+import { parseHeaders } from './core/headers';
 
 type Node =
   | { kind: 'context'; ctx: NatsContext }
@@ -199,8 +200,21 @@ export function activate(context: vscode.ExtensionContext): void {
       });
       if (payload === undefined) return;
       void context.workspaceState.update(`natsLens.payload.${subject}`, payload);
+
+      const headerInput = await vscode.window.showInputBox({
+        prompt: `Optional headers for ${subject} — one per line as k=v (leave empty for none)`,
+        value: context.workspaceState.get(`natsLens.headers.${subject}`, ''),
+      });
+      if (headerInput === undefined) return;
+      void context.workspaceState.update(`natsLens.headers.${subject}`, headerInput);
+      const { headers, errors } = parseHeaders(headerInput);
+      if (errors.length) {
+        void vscode.window.showErrorMessage(`NATS: invalid headers — ${errors.join('; ')}`);
+        return;
+      }
+
       try {
-        client.publish(subject, payload);
+        client.publish(subject, payload, headers);
         void vscode.window.setStatusBarMessage(`NATS: published to ${subject}`, 3000);
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS publish failed — ${err}`);
@@ -228,9 +242,14 @@ export function activate(context: vscode.ExtensionContext): void {
         void vscode.window.showWarningMessage(`NATS: already subscribed to ${subject}`);
         return;
       }
+      const filter = await vscode.window.showInputBox({
+        prompt: `Optional client-side filter (subject pattern, wildcards * and >) — empty shows all`,
+      });
+      if (filter === undefined) return;
       try {
         const channel = vscode.window.createOutputChannel(`NATS: ${subject}`);
         const sub = client.subscribe(subject, (subj, data, headers) => {
+          if (filter && !subjectMatches(filter, subj)) return;
           channel.appendLine(formatMessageLine(subj, data, headers));
         });
         subs.map.set(subject, { sub, channel });

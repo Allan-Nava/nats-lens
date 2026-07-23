@@ -4,6 +4,8 @@
 import {
   connect,
   credsAuthenticator,
+  headers as natsHeaders,
+  MsgHdrs,
   NatsConnection,
   Subscription,
   StringCodec,
@@ -12,6 +14,14 @@ import * as fs from 'fs';
 import { NatsContext } from './contexts';
 
 const sc = StringCodec();
+
+function toMsgHdrs(h: Record<string, string[]>): MsgHdrs {
+  const mh = natsHeaders();
+  for (const [k, values] of Object.entries(h)) {
+    for (const v of values) mh.append(k, v);
+  }
+  return mh;
+}
 
 export interface StreamSummary {
   name: string;
@@ -70,10 +80,11 @@ export class NatsClient {
     return { server: info.server_name ?? '', version: info.version ?? '' };
   }
 
-  publish(subject: string, payload: string, headers?: Record<string, string>): void {
+  publish(subject: string, payload: string, headers?: Record<string, string[]>): void {
     this.assertConnected();
-    this.nc!.publish(subject, sc.encode(payload));
-    void headers;
+    const opts =
+      headers && Object.keys(headers).length ? { headers: toMsgHdrs(headers) } : undefined;
+    this.nc!.publish(subject, sc.encode(payload), opts);
   }
 
   async request(subject: string, payload: string, timeoutMs = 3000): Promise<string> {
