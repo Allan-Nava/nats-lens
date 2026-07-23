@@ -10,6 +10,14 @@
     "type": "git",
     "url": "https://github.com/Allan-Nava/nats-lens"
   },
+  "homepage": "https://github.com/Allan-Nava/nats-lens#readme",
+  "bugs": {
+    "url": "https://github.com/Allan-Nava/nats-lens/issues"
+  },
+  "galleryBanner": {
+    "color": "#0EA5B5",
+    "theme": "dark"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
