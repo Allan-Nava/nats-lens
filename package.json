@@ -139,7 +139,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.24.0",
-    "semantic-release": "^21.0.0",
+    "semantic-release": "^25.0.8",
     "typescript": "^5.5.0"
   }
 }
