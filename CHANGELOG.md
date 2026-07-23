@@ -4,6 +4,7 @@
 - **Publish con headers** (NL-14): il comando publish chiede header opzionali (`k=v` o `k: v`, multi-valore, righe vuote ignorate); gli errori di parsing bloccano l'invio. Gli header vengono ora inviati davvero sul messaggio NATS.
 - **Filtro subject lato client** (NL-15): la subscribe accetta un pattern di filtro opzionale (wildcard NATS `*` e `>`) per mostrare nell'Output solo i messaggi che combaciano.
 - **Preview payload troncata** (NL-16): i messaggi grandi nell'Output sono limitati (cap 4000 caratteri) con nota sulla dimensione totale in byte, così il canale non viene intasato.
+- **Riconnessione automatica** (NL-7): `NatsClient` espone `connectionState` guidato dagli eventi di stato di nats.js; se il server cade, status bar e tree passano a "reconnecting…" invece di restare erroneamente "connected".
 
 ### Modificato
 - CI/CD passata al modello **tag-driven** (`ci.yml` allineato a `ansible-vars-lens`): gate test + type-check + build, job `package` e `publish-marketplace` solo sui tag `v*`.

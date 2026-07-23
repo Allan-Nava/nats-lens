@@ -4,6 +4,7 @@
 import {
   connect,
   credsAuthenticator,
+  Events,
   headers as natsHeaders,
   MsgHdrs,
   NatsConnection,
@@ -39,12 +40,32 @@ export interface ConsumerSummary {
   ackPending: number;
 }
 
+export type ConnState = 'connected' | 'reconnecting' | 'closed';
+
 export class NatsClient {
   private nc: NatsConnection | null = null;
   context: NatsContext | null = null;
+  private state: ConnState = 'closed';
+  private statusListener?: (state: ConnState, detail?: string) => void;
 
   get connected(): boolean {
     return this.nc !== null && !this.nc.isClosed();
+  }
+
+  /** Live connection state, driven by nats.js status events (see NL-7). */
+  get connectionState(): ConnState {
+    return this.state;
+  }
+
+  /** Registers a single listener notified on every connection-state change. */
+  onStatus(cb: (state: ConnState, detail?: string) => void): void {
+    this.statusListener = cb;
+  }
+
+  private setState(state: ConnState, detail?: string): void {
+    if (state === this.state) return;
+    this.state = state;
+    this.statusListener?.(state, detail);
   }
 
   async connectTo(ctx: NatsContext, timeoutMs = 5000): Promise<void> {
@@ -61,12 +82,28 @@ export class NatsClient {
       name: 'nats-lens (vscode)',
     });
     this.context = ctx;
+    this.setState('connected');
+    void this.watchStatus(this.nc);
+    void this.nc.closed().then(() => {
+      if (this.nc === null) this.setState('closed');
+    });
+  }
+
+  /** Consumes the connection's status stream and mirrors it into `state`. */
+  private async watchStatus(nc: NatsConnection): Promise<void> {
+    for await (const s of nc.status()) {
+      if (nc !== this.nc) return; // superseded by a newer connection
+      if (s.type === Events.Disconnect) this.setState('reconnecting', String(s.data ?? ''));
+      else if (s.type === Events.Reconnect) this.setState('connected', String(s.data ?? ''));
+    }
   }
 
   async disconnect(): Promise<void> {
-    if (this.nc && !this.nc.isClosed()) await this.nc.close();
+    const nc = this.nc;
     this.nc = null;
     this.context = null;
+    if (nc && !nc.isClosed()) await nc.close();
+    this.setState('closed');
   }
 
   async rtt(): Promise<number> {

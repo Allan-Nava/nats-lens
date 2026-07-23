@@ -42,7 +42,9 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
   getTreeItem(node: Node): vscode.TreeItem {
     switch (node.kind) {
       case 'context': {
-        const connected = this.client.context?.name === node.ctx.name && this.client.connected;
+        const connected =
+          this.client.context?.name === node.ctx.name &&
+          this.client.connectionState === 'connected';
         const item = new vscode.TreeItem(node.ctx.name, vscode.TreeItemCollapsibleState.None);
         item.description = (connected ? '● connected — ' : node.ctx.selected ? '(cli default) ' : '') + redactedLabel(node.ctx);
         item.iconPath = new vscode.ThemeIcon(connected ? 'vm-active' : 'plug');
@@ -96,7 +98,7 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
           ctx: { name: url, description: '', url, source: '(settings)', selected: false },
         });
       }
-      if (this.client.connected) {
+      if (this.client.connectionState === 'connected') {
         nodes.push({ kind: 'streams-root' });
         if (this.subs.map.size) nodes.push({ kind: 'subs-root' });
       }
@@ -142,12 +144,30 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 89);
   const updateStatus = () => {
-    status.text = client.connected ? `$(broadcast) ${client.context!.name}` : '$(plug) NATS: off';
-    status.tooltip = 'NATS Lens connection';
+    const name = client.context?.name;
+    switch (client.connectionState) {
+      case 'connected':
+        status.text = `$(broadcast) ${name}`;
+        status.tooltip = `NATS Lens — connected to ${name}`;
+        break;
+      case 'reconnecting':
+        status.text = '$(sync~spin) NATS: reconnecting…';
+        status.tooltip = `NATS Lens — lost connection to ${name}, reconnecting…`;
+        break;
+      default:
+        status.text = '$(plug) NATS: off';
+        status.tooltip = 'NATS Lens — not connected';
+    }
     status.command = 'natsLens.connect';
     status.show();
   };
   updateStatus();
+
+  // NL-7: reflect live connection changes (server drop / reconnect) in the UI.
+  client.onStatus(() => {
+    updateStatus();
+    tree.refresh();
+  });
 
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('natsLens.explorer', tree),

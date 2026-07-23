@@ -202,6 +202,20 @@ try {
     await assert.rejects(() => client.request('lens.nobody.home', 'ping', 500));
   });
 
+  // NL-7: killing the server must flip the client off "connected" and notify.
+  // Kept last: it takes the throwaway server down.
+  await test('integration: detects server drop and notifies (NL-7)', async () => {
+    const events: string[] = [];
+    client.onStatus((s) => events.push(s));
+    assert.strictEqual(client.connectionState, 'connected');
+    server!.kill('SIGKILL');
+    for (let i = 0; i < 50 && client.connectionState === 'connected'; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    assert.strictEqual(client.connectionState, 'reconnecting');
+    assert.ok(events.includes('reconnecting'), 'expected a reconnecting status event');
+  });
+
   await client.disconnect();
 } catch (err) {
   console.log(`skip integration tests (${err})`);
