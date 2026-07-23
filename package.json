@@ -1,0 +1,98 @@
+{
+  "name": "nats-lens",
+  "displayName": "NATS Lens",
+  "description": "NATS client inside VS Code: connect via your nats CLI contexts, publish/subscribe/request on subjects, browse JetStream streams and consumers.",
+  "version": "0.1.0",
+  "publisher": "allan-nava",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Allan-Nava/nats-lens"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "nats",
+    "jetstream",
+    "messaging",
+    "pubsub",
+    "devops"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "natsLens",
+          "title": "NATS",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "natsLens": [
+        {
+          "id": "natsLens.explorer",
+          "name": "Connections"
+        }
+      ]
+    },
+    "commands": [
+      { "command": "natsLens.refresh", "title": "NATS Lens: Refresh", "icon": "$(refresh)" },
+      { "command": "natsLens.connect", "title": "NATS Lens: Connect to Context" },
+      { "command": "natsLens.disconnect", "title": "NATS Lens: Disconnect" },
+      { "command": "natsLens.publish", "title": "NATS Lens: Publish Message" },
+      { "command": "natsLens.request", "title": "NATS Lens: Send Request (request-reply)" },
+      { "command": "natsLens.subscribe", "title": "NATS Lens: Subscribe to Subject" },
+      { "command": "natsLens.unsubscribe", "title": "NATS Lens: Stop a Subscription" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "natsLens.refresh", "when": "view == natsLens.explorer", "group": "navigation" }
+      ],
+      "view/item/context": [
+        { "command": "natsLens.connect", "when": "view == natsLens.explorer && viewItem == context" },
+        { "command": "natsLens.disconnect", "when": "view == natsLens.explorer && viewItem == context-connected" },
+        { "command": "natsLens.unsubscribe", "when": "view == natsLens.explorer && viewItem == subscription" }
+      ]
+    },
+    "configuration": {
+      "title": "NATS Lens",
+      "properties": {
+        "natsLens.contextsDir": {
+          "type": "string",
+          "default": "",
+          "description": "Directory with nats CLI context JSON files. Empty = ~/.config/nats/context."
+        },
+        "natsLens.extraServers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": [],
+          "description": "Extra server URLs (nats://host:4222) shown alongside CLI contexts."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "test": "node esbuild.mjs --test && node .test/run.mjs",
+    "package": "vsce package",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "nats": "^2.29.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.5.0"
+  }
+}
