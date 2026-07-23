@@ -198,6 +198,17 @@ try {
     assert.strictEqual(consumers[0].pending, 1);
   });
 
+  await test('integration: purge stream and delete consumer (NL-9)', async () => {
+    const purged = await client.purgeStream('LENS');
+    assert.ok(purged >= 1, 'expected at least one message purged');
+    const streams = await client.streams();
+    assert.strictEqual(streams.find((s) => s.name === 'LENS')!.messages, 0);
+
+    const deleted = await client.deleteConsumer('LENS', 'worker');
+    assert.strictEqual(deleted, true);
+    assert.strictEqual((await client.consumers('LENS')).length, 0);
+  });
+
   await test('integration: request gets an error without a responder', async () => {
     await assert.rejects(() => client.request('lens.nobody.home', 'ping', 500));
   });

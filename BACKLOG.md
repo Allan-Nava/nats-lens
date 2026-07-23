@@ -25,7 +25,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 
 - [x] **NL-7 — Riconnessione automatica**: `NatsClient` espone `connectionState` (`connected`/`reconnecting`/`closed`) via gli eventi di stato di nats.js; status bar e tree riflettono la caduta del server (spinner "reconnecting…").
 - [ ] **NL-8 — Persistenza subscriptions**: salvataggio delle sottoscrizioni attive tra sessioni e stato nel tree.
-- [ ] **NL-9 — Operazioni JetStream con conferma**: purge stream, delete consumer (doppia conferma, mai di default).
+- [x] **NL-9 — Operazioni JetStream con conferma**: purge stream e delete consumer (`client.purgeStream`/`deleteConsumer`), con doppia conferma modale (mai di default) dal menu contestuale del tree.
 
 ## v0.3+ — Advanced
 

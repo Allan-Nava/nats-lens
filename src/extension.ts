@@ -9,7 +9,7 @@ type Node =
   | { kind: 'context'; ctx: NatsContext }
   | { kind: 'streams-root' }
   | { kind: 'stream'; stream: StreamSummary }
-  | { kind: 'consumer'; label: string }
+  | { kind: 'consumer'; label: string; stream?: string; name?: string }
   | { kind: 'subs-root' }
   | { kind: 'subscription'; subject: string };
 
@@ -64,11 +64,13 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
         const item = new vscode.TreeItem(s.name, vscode.TreeItemCollapsibleState.Collapsed);
         item.description = `${s.messages} msg · ${prettyBytes(s.bytes)} · ${s.subjects.join(', ')}`;
         item.iconPath = new vscode.ThemeIcon('layers');
+        item.contextValue = 'stream';
         return item;
       }
       case 'consumer': {
         const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
         item.iconPath = new vscode.ThemeIcon('person');
+        if (node.name) item.contextValue = 'consumer';
         return item;
       }
       case 'subs-root': {
@@ -118,6 +120,8 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
         return consumers.map((c) => ({
           kind: 'consumer' as const,
           label: `${c.name} — pending ${c.pending}, ack pending ${c.ackPending}`,
+          stream: node.stream.name,
+          name: c.name,
         }));
       } catch {
         return [];
@@ -291,7 +295,37 @@ export function activate(context: vscode.ExtensionContext): void {
         subs.stop(subject);
         tree.refresh();
       }
-    })
+    }),
+
+    vscode.commands.registerCommand('natsLens.purgeStream', async (node?: { stream?: StreamSummary }) => {
+      const name = node?.stream?.name;
+      if (!name) return;
+      if (!(await confirmDestructive(`Purge stream "${name}"? Tutti i messaggi verranno eliminati.`, 'Purge'))) return;
+      try {
+        const purged = await client.purgeStream(name);
+        void vscode.window.showInformationMessage(`NATS: purged ${purged} messages from ${name}`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS purge failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand(
+      'natsLens.deleteConsumer',
+      async (node?: { stream?: string; name?: string }) => {
+        const stream = node?.stream;
+        const consumer = node?.name;
+        if (!stream || !consumer) return;
+        if (!(await confirmDestructive(`Delete consumer "${consumer}" from stream "${stream}"?`, 'Delete'))) return;
+        try {
+          await client.deleteConsumer(stream, consumer);
+          void vscode.window.showInformationMessage(`NATS: deleted consumer ${consumer}`);
+          tree.refresh();
+        } catch (err) {
+          void vscode.window.showErrorMessage(`NATS delete consumer failed — ${err}`);
+        }
+      }
+    )
   );
 
   context.subscriptions.push({
@@ -300,6 +334,18 @@ export function activate(context: vscode.ExtensionContext): void {
       void client.disconnect();
     },
   });
+}
+
+/** Two-step modal confirmation for destructive JetStream ops (NL-9). Never defaults to yes. */
+async function confirmDestructive(message: string, confirmLabel: string): Promise<boolean> {
+  const first = await vscode.window.showWarningMessage(message, { modal: true }, confirmLabel);
+  if (first !== confirmLabel) return false;
+  const second = await vscode.window.showWarningMessage(
+    "Operazione NON reversibile. Confermi?",
+    { modal: true },
+    confirmLabel
+  );
+  return second === confirmLabel;
 }
 
 async function askSubject(prompt: string, wildcards: boolean): Promise<string | undefined> {

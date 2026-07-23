@@ -176,6 +176,21 @@ export class NatsClient {
     return result.sort((a, b) => a.name.localeCompare(b.name));
   }
 
+  /** Deletes all messages from a stream. Returns the number purged. */
+  async purgeStream(name: string): Promise<number> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    const res = await jsm.streams.purge(name);
+    return res.purged;
+  }
+
+  /** Deletes a consumer from a stream. Returns true on success. */
+  async deleteConsumer(stream: string, name: string): Promise<boolean> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    return jsm.consumers.delete(stream, name);
+  }
+
   private assertConnected(): void {
     if (!this.connected) throw new Error('not connected to any NATS server');
   }

@@ -81,6 +81,16 @@
       {
         "command": "natsLens.unsubscribe",
         "title": "NATS Lens: Stop a Subscription"
+      },
+      {
+        "command": "natsLens.purgeStream",
+        "title": "NATS Lens: Purge Stream",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "natsLens.deleteConsumer",
+        "title": "NATS Lens: Delete Consumer",
+        "icon": "$(trash)"
       }
     ],
     "menus": {
@@ -103,6 +113,16 @@
         {
           "command": "natsLens.unsubscribe",
           "when": "view == natsLens.explorer && viewItem == subscription"
+        },
+        {
+          "command": "natsLens.purgeStream",
+          "when": "view == natsLens.explorer && viewItem == stream",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.deleteConsumer",
+          "when": "view == natsLens.explorer && viewItem == consumer",
+          "group": "inline"
         }
       ]
     },
