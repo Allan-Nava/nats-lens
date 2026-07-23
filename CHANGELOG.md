@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/Allan-Nava/nats-lens/compare/v1.0.1...v1.1.0) (2026-07-23)
+
+
+### Features
+
+* add Marketplace gallery banner and repo metadata ([c35ac85](https://github.com/Allan-Nava/nats-lens/commit/c35ac8562e8bf84dcb1a786fe301b85cfec3023e))
+
 ## [1.0.1](https://github.com/Allan-Nava/nats-lens/compare/v1.0.0...v1.0.1) (2026-07-23)
 
 
