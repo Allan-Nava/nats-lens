@@ -84,7 +84,8 @@
     "watch": "node esbuild.mjs --watch",
     "test": "node esbuild.mjs --test && node .test/run.mjs",
     "package": "vsce package",
-    "vscode:prepublish": "npm run build"
+    "vscode:prepublish": "npm run build",
+    "create-issues": "node create-issues.js"
   },
   "dependencies": {
     "nats": "^2.29.0"
