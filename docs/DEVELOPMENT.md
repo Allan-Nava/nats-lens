@@ -4,7 +4,7 @@ title: Sviluppo e rilascio
 
 # Sviluppo e rilascio
 
-[← Torna alla home](index.md) · [Guida all'utilizzo](USAGE.md)
+[← Torna alla home](index.html) · [Guida all'utilizzo](USAGE.html)
 
 ## Prerequisiti
 

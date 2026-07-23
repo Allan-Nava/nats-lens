@@ -1,34 +1,56 @@
 ---
 title: NATS Lens
+description: Client NATS dentro VS Code — context CLI, publish/subscribe/request, browser JetStream.
 ---
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Allan-Nava/nats-lens/main/media/logo.png" alt="NATS Lens" width="128" height="128">
-</p>
+<section class="hero">
+  <img class="logo" src="logo.png" alt="NATS Lens">
+  <h1>NATS Lens</h1>
+  <p class="tag">Un client <a href="https://nats.io">NATS</a> dentro VS Code: usa i context della CLI <code>nats</code> che hai già, pubblica/sottoscrivi/richiedi sui subject e sfoglia JetStream — senza uscire dall'editor.</p>
+  <div class="badges">
+    <a href="https://marketplace.visualstudio.com/items?itemName=allannava95.nats-lens"><img src="https://img.shields.io/visual-studio-marketplace/v/allannava95.nats-lens?label=Marketplace&color=0EA5B5" alt="Marketplace"></a>
+    <a href="https://github.com/Allan-Nava/nats-lens"><img src="https://img.shields.io/github/license/Allan-Nava/nats-lens?color=2563EB" alt="License"></a>
+  </div>
+  <div class="cta">
+    <a class="btn primary" href="https://marketplace.visualstudio.com/items?itemName=allannava95.nats-lens">Installa da Marketplace</a>
+    <a class="btn ghost" href="USAGE.html">Guida all'utilizzo</a>
+  </div>
+</section>
 
-# NATS Lens
+<h2 class="section-title">Cosa fa</h2>
 
-**Client [NATS](https://nats.io) dentro VS Code** — ti connetti con i **context della CLI `nats`**
-che hai già, pubblichi/sottoscrivi/richiedi sui subject e sfogli **JetStream** (stream e consumer)
-senza uscire dall'editor.
-
-[![Marketplace](https://img.shields.io/visual-studio-marketplace/v/allannava95.nats-lens?label=Marketplace)](https://marketplace.visualstudio.com/items?itemName=allannava95.nats-lens)
-
----
-
-## Documentazione
-
-- 📖 **[Guida all'utilizzo](USAGE.md)** — installazione, context, connessione, publish/subscribe/request, JetStream.
-- 🛠️ **[Sviluppo e rilascio](DEVELOPMENT.md)** — build, test, packaging, pipeline di pubblicazione.
-
-## In breve
-
-- **Context CLI, zero config** — legge `~/.config/nats/context/*.json` (url, user/password, token, `.creds`).
-  Le credenziali servono solo per connettersi e **non vengono mai mostrate**.
-- **Connessione** con indicatore in status bar (connesso / *reconnecting…* / off).
-- **Publish** con header opzionali, **Subscribe** con wildcard + filtro client-side, **Request/Reply**.
-- **JetStream**: stream (msg, byte, subjects) e consumer (pending, ack pending);
-  **purge stream** e **delete consumer** con doppia conferma.
+<div class="features">
+  <div class="card">
+    <div class="ico">🔌</div>
+    <h3>Context CLI, zero config</h3>
+    <p>Legge <code>~/.config/nats/context/*.json</code> (url, user/password, token, <code>.creds</code>). Le credenziali servono solo a connettersi e non vengono mai mostrate.</p>
+  </div>
+  <div class="card">
+    <div class="ico">📡</div>
+    <h3>Publish / Subscribe / Request</h3>
+    <p>Publish con header opzionali, subscribe con wildcard e filtro client-side in un Output dedicato, request-reply con timeout.</p>
+  </div>
+  <div class="card">
+    <div class="ico">🗄️</div>
+    <h3>Browser JetStream</h3>
+    <p>Stream con messaggi, byte e subjects; consumer con pending e ack-pending. Purge stream e delete consumer con doppia conferma.</p>
+  </div>
+  <div class="card">
+    <div class="ico">🟢</div>
+    <h3>Stato connessione affidabile</h3>
+    <p>La status bar riflette lo stato reale: connesso, <em>reconnecting…</em> se il server cade, off a chiusura definitiva.</p>
+  </div>
+  <div class="card">
+    <div class="ico">🔒</div>
+    <h3>Credenziali al sicuro</h3>
+    <p>Le label sono sempre oscurate (es. <code>nats://host:4222 (user app)</code>): password e token non finiscono mai nell'UI o nei log.</p>
+  </div>
+  <div class="card">
+    <div class="ico">🪶</div>
+    <h3>Leggera</h3>
+    <p>Bundle esbuild, unica dipendenza runtime <code>nats</code>. Nessun binario esterno richiesto.</p>
+  </div>
+</div>
 
 ## Installazione rapida
 
@@ -38,8 +60,5 @@ senza uscire dall'editor.
 code --install-extension nats-lens-<versione>.vsix
 ```
 
-## Link
-
-- Repository: [github.com/Allan-Nava/nats-lens](https://github.com/Allan-Nava/nats-lens)
-- Issue / backlog: [Issues](https://github.com/Allan-Nava/nats-lens/issues)
-- Changelog: [CHANGELOG.md](https://github.com/Allan-Nava/nats-lens/blob/main/CHANGELOG.md)
+Poi apri la **activity bar → icona NATS**, scegli un context e connettiti.
+Il resto è nella **[guida all'utilizzo](USAGE.html)**; per contribuire vedi **[sviluppo e rilascio](DEVELOPMENT.html)**.

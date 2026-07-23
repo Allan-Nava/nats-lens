@@ -1,4 +1,11 @@
+---
+title: Guida all'utilizzo
+description: Come usare NATS Lens — installazione, context, connessione, publish/subscribe/request, JetStream.
+---
+
 # NATS Lens — Guida all'utilizzo
+
+[← Torna alla home](index.html) · [Sviluppo e rilascio](DEVELOPMENT.html)
 
 Client NATS dentro VS Code: ti connetti con i **context della CLI `nats`** che hai già,
 pubblichi/sottoscrivi/richiedi sui subject e sfogli **JetStream** (stream e consumer)

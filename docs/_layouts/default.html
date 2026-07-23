@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}{% if page.title and page.title != site.title %} · {{ site.title }}{% endif %}</title>
+  <meta name="description" content="{{ page.description | default: site.description }}">
+  <link rel="icon" href="logo.png" type="image/png">
+  <style>
+    :root {
+      --bg: #ffffff; --surface: #f6f8fa; --border: #e5e9ef;
+      --fg: #1f2328; --muted: #5a6472; --link: #0e7fb5;
+      --accent1: #22D3A6; --accent2: #0EA5B5; --accent3: #2563EB;
+      --code-bg: #f2f4f7; --shadow: 0 1px 3px rgba(16,24,40,.08), 0 8px 24px rgba(16,24,40,.06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117; --surface: #161b22; --border: #232b36;
+        --fg: #e6edf3; --muted: #9aa7b5; --link: #56b6e0;
+        --code-bg: #12181f; --shadow: 0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--fg);
+      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Header */
+    .nav {
+      position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 20px; background: color-mix(in srgb, var(--bg) 82%, transparent);
+      backdrop-filter: saturate(180%) blur(10px); border-bottom: 1px solid var(--border);
+    }
+    .nav img { width: 28px; height: 28px; border-radius: 7px; }
+    .nav .brand { font-weight: 700; letter-spacing: -.01em; }
+    .nav .spacer { flex: 1; }
+    .nav a.navlink { color: var(--muted); font-size: 14px; font-weight: 600; }
+    .nav a.navlink:hover { color: var(--fg); text-decoration: none; }
+
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+
+    /* ---- Markdown content (base typography) ---- */
+    .content { padding: 8px 0 24px; }
+    .content h1 { font-size: 32px; letter-spacing: -.02em; margin: 24px 0 16px; }
+    .content h2 { font-size: 23px; letter-spacing: -.015em; margin: 34px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    .content h3 { font-size: 18px; margin: 24px 0 8px; }
+    .content p, .content li { color: var(--fg); }
+    .content code {
+      background: var(--code-bg); padding: .15em .4em; border-radius: 6px; font-size: .88em;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+    .content pre {
+      background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; overflow-x: auto;
+    }
+    .content pre code { background: none; padding: 0; }
+    .content table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; margin: 16px 0; }
+    .content th, .content td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; font-size: 14.5px; }
+    .content th { background: var(--surface); }
+    .content blockquote {
+      margin: 16px 0; padding: 8px 16px; border-left: 3px solid var(--accent2);
+      background: var(--surface); border-radius: 0 8px 8px 0; color: var(--muted);
+    }
+    .content img { max-width: 100%; }
+
+    /* ---- Landing (declared AFTER content so it wins on equal specificity) ---- */
+    .hero { text-align: center; padding: 48px 20px 36px; }
+    .hero img.logo { width: 108px; height: 108px; border-radius: 24px; box-shadow: var(--shadow); }
+    .hero h1 {
+      margin: 22px 0 6px; font-size: 44px; line-height: 1.1; letter-spacing: -.03em;
+      background: linear-gradient(120deg, var(--accent1), var(--accent2), var(--accent3));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .hero .tag { margin: 0 auto; max-width: 620px; color: var(--muted); font-size: 18px; }
+    .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 20px 0 0; }
+    .badges img { height: 20px; }
+    .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px; padding: 11px 20px; border-radius: 10px;
+      font-weight: 650; font-size: 15px; border: 1px solid var(--border);
+    }
+    .btn:hover { text-decoration: none; }
+    .btn.primary { color: #fff; border: none; background: linear-gradient(120deg, var(--accent2), var(--accent3)); }
+    .btn.primary:hover { filter: brightness(1.06); }
+    .btn.ghost { background: var(--surface); color: var(--fg); }
+
+    h2.section-title { text-align: center; letter-spacing: -.02em; margin: 12px 0 22px; font-size: 26px; border-bottom: none; padding: 0; }
+
+    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin: 8px 0 40px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; box-shadow: var(--shadow); }
+    .card .ico { font-size: 24px; }
+    .card h3 { margin: 10px 0 6px; font-size: 16.5px; letter-spacing: -.01em; }
+    .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+    footer {
+      border-top: 1px solid var(--border); color: var(--muted); font-size: 14px;
+      text-align: center; padding: 28px 20px 40px; margin-top: 24px;
+    }
+    footer a { color: var(--muted); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <img src="logo.png" alt="">
+    <span class="brand">NATS Lens</span>
+    <span class="spacer"></span>
+    <a class="navlink" href="USAGE.html">Guida</a>
+    <a class="navlink" href="DEVELOPMENT.html">Sviluppo</a>
+    <a class="navlink" href="https://github.com/Allan-Nava/nats-lens">GitHub</a>
+  </nav>
+
+  <main class="wrap">
+    <div class="content">
+      {{ content }}
+    </div>
+  </main>
+
+  <footer>
+    NATS Lens · <a href="https://github.com/Allan-Nava/nats-lens">github.com/Allan-Nava/nats-lens</a> ·
+    <a href="https://github.com/Allan-Nava/nats-lens/blob/main/CHANGELOG.md">Changelog</a> · MIT
+  </footer>
+</body>
+</html>
