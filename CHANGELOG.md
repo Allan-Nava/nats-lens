@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: Fix `backlog-sync` workflow to use `github.request` for listing milestones (prevents TypeError in actions/github-script)
+
 ## 0.1.0
 
 - Connections view fed by `nats` CLI contexts (`~/.config/nats/context`), credentials never displayed.
