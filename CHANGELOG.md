@@ -1,3 +1,18 @@
+# 1.0.0 (2026-07-23)
+
+
+### Bug Fixes
+
+* update changelog to include fix for `backlog-sync` workflow using `github.request` ([1fdc443](https://github.com/Allan-Nava/nats-lens/commit/1fdc443bac8f464956d9f3e6d6805f333cdb3fa0))
+
+
+### Features
+
+* add CI workflow and contributing guidelines ([318b1df](https://github.com/Allan-Nava/nats-lens/commit/318b1df89103eb10ec67fdfe16298618529344de))
+* add GitHub Actions workflow to sync BACKLOG.md with Issues and Milestones ([993b1d9](https://github.com/Allan-Nava/nats-lens/commit/993b1d9d0aea9cc98abf49cf82bfc7e0015f09b7))
+* add steps to create and upload VSIX release on GitHub ([1be3d40](https://github.com/Allan-Nava/nats-lens/commit/1be3d40f8d4d7adad1688c9088e28852bbc986a7))
+* initialize NATS Lens extension with core functionality ([b3847f8](https://github.com/Allan-Nava/nats-lens/commit/b3847f819863685fe9f38af4a075b31a4abb7abe))
+
 # Changelog
 
 ## Unreleased
