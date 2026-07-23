@@ -48,7 +48,7 @@ jobs:
             const repo = context.repo.repo
 
             async function ensureMilestone(title) {
-              const list = await github.rest.issues.listMilestonesForRepo({ owner, repo, state: 'all' })
+              const list = await github.request('GET /repos/{owner}/{repo}/milestones', { owner, repo, state: 'all' })
               const found = list.data.find(ms => ms.title === title)
               if (found) return found
               return (await github.rest.issues.createMilestone({ owner, repo, title, state: 'open' })).data
@@ -76,4 +76,4 @@ jobs:
               }
             }
 
-            core.info(`Synced ${Object.keys(milestones).length} milestones`)
+            console.log(`Synced ${Object.keys(milestones).length} milestones`)

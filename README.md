@@ -39,6 +39,17 @@ npm run build        # bundle to dist/
 
 The core (context parsing, payload rendering, client wrapper) has no VS Code dependency and lives in `src/core/` — the integration test spins up `nats-server -js` on a random port, exercises pub/sub, JetStream listing and request-reply, then tears it down. If `nats-server` is not installed the integration tests are skipped.
 
+## Branch protection & CI
+
+We recommend protecting the `main` branch and requiring the CI workflow to pass before merging. Suggested protection rules:
+
+- Require status checks to pass (select the `CI` workflow).
+- Require pull request reviews before merge (1 or 2 reviewers).
+- Dismiss stale pull request approvals when new commits are pushed.
+- Restrict who can push to `main` (maintainers only).
+
+These rules help enforce the TDD standard (`npm test`) and ensure releases are gated by passing CI.
+
 ## License
 
 MIT
