@@ -5,6 +5,7 @@
   "version": "0.1.0",
   "publisher": "allan-nava",
   "license": "MIT",
+  "icon": "media/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Allan-Nava/nats-lens"

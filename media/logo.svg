@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3A6"/>
+      <stop offset="0.55" stop-color="#0EA5B5"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="34" y1="30" x2="82" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.06"/>
+    </linearGradient>
+  </defs>
+
+  <!-- rounded-square app tile -->
+  <rect x="0" y="0" width="128" height="128" rx="30" fill="url(#bg)"/>
+  <rect x="0.75" y="0.75" width="126.5" height="126.5" rx="29.25" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5"/>
+
+  <!-- magnifying-glass handle -->
+  <line x1="86" y1="86" x2="104" y2="104" stroke="#ffffff" stroke-width="11" stroke-linecap="round"/>
+  <line x1="86" y1="86" x2="104" y2="104" stroke="#0B4A6F" stroke-opacity="0.25" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- lens body -->
+  <circle cx="57" cy="57" r="35" fill="url(#glass)"/>
+  <circle cx="57" cy="57" r="35" fill="none" stroke="#ffffff" stroke-width="7"/>
+
+  <!-- messaging: radiating pub/sub arcs + central node, seen through the lens -->
+  <g stroke="#ffffff" stroke-width="3.4" stroke-linecap="round" fill="none">
+    <path d="M45.5 43.5a19 19 0 0 0 0 27M68.5 43.5a19 19 0 0 1 0 27" opacity="0.95"/>
+    <path d="M51.5 49.5a10.5 10.5 0 0 0 0 15M62.5 49.5a10.5 10.5 0 0 1 0 15" opacity="0.95"/>
+  </g>
+  <circle cx="57" cy="57" r="5.4" fill="#ffffff"/>
+</svg>

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="media/logo.png" alt="NATS Lens" width="128" height="128">
+</p>
+
 # NATS Lens
 
 **A [NATS](https://nats.io) client inside VS Code** — connect with the contexts you already have from the `nats` CLI, publish/subscribe/request on subjects, and browse JetStream streams and consumers without leaving the editor.
