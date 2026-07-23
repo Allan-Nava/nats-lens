@@ -5,7 +5,7 @@
 - **Publish sul Marketplace**: il workflow usava il secret `VSCE_PAT` inesistente; ora usa `VSCE_TOKEN` (quello effettivamente configurato), così il job non salta più.
 
 ### Aggiunto
-- `docs/USAGE.md`: guida all'utilizzo completa, linkata dal README.
+- **Documentazione**: guida all'utilizzo (`docs/USAGE.md`), pagina di sviluppo (`docs/DEVELOPMENT.md`) e landing (`docs/index.md`), pubblicate come **sito GitHub Pages** (`.github/workflows/pages.yml`, deploy automatico al push su `main`). Linkate dal README.
 
 ## [1.2.0] — 2026-07-23
 

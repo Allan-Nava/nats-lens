@@ -10,6 +10,7 @@ Estensione VS Code **NATS Lens** (`github.com/Allan-Nava/nats-lens`): client NAT
 - **La logica va nel core puro** (`src/core/` — MAI import `vscode` lì) con test in `test/run.ts`; `src/extension.ts` è solo glue UI.
 - **SICUREZZA CREDENZIALI**: i context in `~/.config/nats/context` contengono password/token reali. MAI stamparli, loggarli o mostrarli in UI — usare sempre `redactedLabel()`; c'è un test che fallisce se la label contiene la password. Nei test MAI connettersi ai server dei context reali (produzione): solo il nats-server usa-e-getta locale.
 - **Todo → `BACKLOG.md`** (sorgente unica, item con id stabile `NL-n`). Non sparpagliare TODO nei commenti.
+- **Documentazione SEMPRE aggiornata**: ogni modifica funzionale (comandi, feature, impostazioni, flusso) va riflessa in `docs/` (`docs/USAGE.md` + `docs/index.md`) nello stesso commit. Il sito GitHub Pages è servito da `docs/` via `.github/workflows/pages.yml` e si ri-deploya al push su `main`: non serve pubblicarlo a mano, ma i contenuti devono essere allineati al codice.
 
 ## Comandi
 

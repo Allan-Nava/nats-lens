@@ -1,0 +1,8 @@
+title: NATS Lens
+description: Client NATS dentro VS Code — context CLI, publish/subscribe/request, browser JetStream.
+theme: jekyll-theme-cayman
+show_downloads: false
+
+# Escludi i file non-doc dal build del sito
+exclude:
+  - "*.vsix"
