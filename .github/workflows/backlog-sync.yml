@@ -1,0 +1,79 @@
+name: Sync Backlog
+
+on:
+  push:
+    paths:
+      - 'BACKLOG.md'
+  schedule:
+    - cron: '0 6 * * 1' # weekly on Monday UTC
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync BACKLOG.md to Issues & Milestones
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs')
+            const path = 'BACKLOG.md'
+            const content = fs.readFileSync(path, 'utf8')
+
+            // Parse milestones and items
+            const lines = content.split(/\r?\n/)
+            let currentMilestone = null
+            const milestones = {}
+
+            const milestoneRe = /^##\s+Milestone:\s*(.+)$/
+            const itemRe = /^- \[ \]\s+(NL-\d+):\s+([^\u2014\-–—]+)(?:[\u2014\-–—]\s*(.*))?$/
+
+            for (const l of lines) {
+              const m = l.match(milestoneRe)
+              if (m) { currentMilestone = m[1].trim(); milestones[currentMilestone] = []; continue }
+              const it = l.match(itemRe)
+              if (it && currentMilestone) {
+                const id = it[1].trim()
+                const title = it[2].trim()
+                const desc = (it[3]||'').trim()
+                milestones[currentMilestone].push({ id, title, desc })
+              }
+            }
+
+            const owner = context.repo.owner
+            const repo = context.repo.repo
+
+            async function ensureMilestone(title) {
+              const list = await github.rest.issues.listMilestonesForRepo({ owner, repo, state: 'all' })
+              const found = list.data.find(ms => ms.title === title)
+              if (found) return found
+              return (await github.rest.issues.createMilestone({ owner, repo, title, state: 'open' })).data
+            }
+
+            async function ensureIssue(item, milestone) {
+              const issueTitle = `${item.id}: ${item.title}`
+              // search existing issue by title
+              const existing = await github.rest.issues.listForRepo({ owner, repo, state: 'all', per_page: 100 })
+              const found = existing.data.find(i => i.title === issueTitle)
+              const body = `Backlog item **${item.id}**\n\n${item.desc || ''}\n\nSource: BACKLOG.md`;
+              if (found) {
+                // update milestone/labels/body if needed
+                await github.rest.issues.update({ owner, repo, issue_number: found.number, body, milestone: milestone.number, labels: ['backlog'] })
+                return found
+              }
+              const created = await github.rest.issues.create({ owner, repo, title: issueTitle, body, milestone: milestone.number, labels: ['backlog'] })
+              return created.data
+            }
+
+            for (const [msTitle, items] of Object.entries(milestones)) {
+              const ms = await ensureMilestone(msTitle)
+              for (const it of items) {
+                await ensureIssue(it, ms)
+              }
+            }
+
+            core.info(`Synced ${Object.keys(milestones).length} milestones`)

@@ -1,3 +1,23 @@
+# BACKLOG — nats-lens
+
+Questo file è la sorgente di verità per il backlog del progetto. Un workflow GitHub Actions lo sincronizzerà con Issues e Milestones.
+
+## Milestone: v0.1 (MVP)
+
+- [ ] NL-1: Browse JetStream streams — Permettere la navigazione e l'elenco di stream JetStream (nome, soggetti, messaggi recenti).
+- [ ] NL-2: Publish/Subscribe UI — Interfaccia per pubblicare messaggi e creare sottoscrizioni dalla estensione.
+- [ ] NL-3: Request/Reply helper — Helper per inviare request e visualizzare le reply con timeout configurabile.
+
+## Milestone: v0.2 (Stabilità e UX)
+
+- [ ] NL-4: Persistenza delle subscriptions — Salvataggio delle sottoscrizioni attive tra sessioni e indicazione stato nel tree.
+- [ ] NL-5: Render payload migliorato — Migliorare `renderPayload` con preview JSON, testo e fallback binario (test coperti).
+- [ ] NL-6: Test + CI — Aggiungere test automatizzati e workflow CI per `npm run build` e `npm test`.
+
+## Convenzione backlog
+
+- Ogni elemento ha un ID stabile `NL-<n>`.
+- Le voci sono fonte unica: modificare qui per cambiare lo stato/descrizione; la sync aggiornerà Issues/Milestones.
 # Backlog — nats-lens
 
 Sorgente unica dei todo. Id stabili `NL-n`; spuntare, non cancellare.
