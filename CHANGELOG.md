@@ -1,3 +1,12 @@
+## [1.2.1] — 2026-07-23
+
+### Corretto
+- **Stato connessione su chiusura definitiva** (NL-7): a tentativi di riconnessione esauriti il client passa ora a `closed` invece di restare bloccato su `reconnecting…`. `connectTo` accetta bound di reconnect opzionali; test esteso a `reconnecting → closed`.
+- **Publish sul Marketplace**: il workflow usava il secret `VSCE_PAT` inesistente; ora usa `VSCE_TOKEN` (quello effettivamente configurato), così il job non salta più.
+
+### Aggiunto
+- `docs/USAGE.md`: guida all'utilizzo completa, linkata dal README.
+
 ## [1.2.0] — 2026-07-23
 
 ### Aggiunto
