@@ -114,12 +114,12 @@ jobs:
       - run: npm ci
       - name: Publish to Marketplace
         run: |
-          if [[ -z "${{ secrets.VSCE_PAT }}" ]]; then
-            echo "⚠️  VSCE_PAT not configured. Skipping marketplace publish."
+          if [[ -z "${{ secrets.VSCE_TOKEN }}" ]]; then
+            echo "⚠️  VSCE_TOKEN not configured. Skipping marketplace publish."
             echo "📋 Setup: https://github.com/Allan-Nava/nats-lens/settings/secrets/actions"
             exit 0
           fi
-          npx @vscode/vsce publish --pat "${{ secrets.VSCE_PAT }}" --no-dependencies
+          npx @vscode/vsce publish --pat "${{ secrets.VSCE_TOKEN }}" --no-dependencies
       - name: Publish success
         if: success()
         run: |

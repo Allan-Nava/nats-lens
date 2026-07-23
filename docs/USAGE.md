@@ -1,0 +1,135 @@
+# NATS Lens — Guida all'utilizzo
+
+Client NATS dentro VS Code: ti connetti con i **context della CLI `nats`** che hai già,
+pubblichi/sottoscrivi/richiedi sui subject e sfogli **JetStream** (stream e consumer)
+senza uscire dall'editor.
+
+---
+
+## 1. Installazione
+
+- **Da Marketplace**: cerca *NATS Lens* (`allannava95.nats-lens`) e installa.
+- **Da `.vsix`**: `code --install-extension nats-lens-<versione>.vsix`
+  (oppure Command Palette → *Extensions: Install from VSIX…*).
+
+Requisiti: VS Code ≥ 1.85. Nessun runtime esterno — il client `nats.js` è incluso nel bundle.
+
+---
+
+## 2. Preparare i context
+
+NATS Lens **non gestisce credenziali proprie**: riusa i context della CLI `nats`, letti da
+`~/.config/nats/context/*.json`. Se usi già la CLI, sei a posto. Per crearne uno:
+
+```bash
+nats context add prod \
+  --server nats://nats.example.com:4222 \
+  --user app --password '••••••'
+nats context select prod          # il context selezionato viene evidenziato in NATS Lens
+```
+
+Auth supportata per context: **user/password**, **token**, file **`.creds`** (JWT).
+Le credenziali servono solo per connettersi e **non vengono mai mostrate** nell'UI
+(le label usano una forma oscurata, es. `nats://host:4222 (user app)`).
+
+> **Cartella diversa?** Impostazione `natsLens.contextsDir`.
+> **Server senza context?** Aggiungili in `natsLens.extraServers` (es. `nats://localhost:4222`).
+
+---
+
+## 3. Connettersi
+
+1. Apri la **activity bar → icona NATS** → vista **Connections**.
+2. Clicca un context (o Command Palette → **NATS Lens: Connect to Context**).
+3. La **status bar** in basso mostra lo stato:
+   - `$(broadcast) <context>` — connesso
+   - `$(sync~spin) NATS: reconnecting…` — il server è caduto, tentativi in corso
+   - `$(plug) NATS: off` — disconnesso / chiuso
+
+Disconnessione: **NATS Lens: Disconnect** (chiude anche tutte le subscription attive).
+
+---
+
+## 4. Pubblicare, sottoscrivere, richiedere
+
+### Publish
+Command Palette → **NATS Lens: Publish Message**.
+- **Subject**: validato (niente spazi; niente wildcard in publish).
+- **Payload**: testo o JSON (memorizzato per subject, riproposto la volta dopo).
+- **Headers** (opzionali): una per riga, formato `k=v` **oppure** `k: v`.
+  Chiavi ripetute → valori multipli. Righe con errori bloccano l'invio con un messaggio.
+
+```
+trace-id: abc-123
+x-retry=0
+x-retry=1
+```
+
+### Subscribe
+Command Palette → **NATS Lens: Subscribe to Subject**.
+- **Subject** con wildcard: `*` (un token), `>` (uno o più token finali). Es. `orders.*.created`, `logs.>`.
+- **Filtro opzionale** lato client: restringe cosa appare nell'Output senza cambiare la subscription.
+- I messaggi arrivano in un **Output channel dedicato** (`NATS: <subject>`):
+  JSON stampato indentato, header mostrati tra `{}`, binario rilevato, payload grandi troncati
+  (con nota sui byte totali) per non intasare il canale.
+
+Le subscription attive compaiono sotto **Subscriptions** nel tree; fermane una con
+**NATS Lens: Stop a Subscription** o dal menu contestuale.
+
+### Request / Reply
+Command Palette → **NATS Lens: Send Request (request-reply)**.
+Inserisci subject e payload: la reply si apre come documento. Timeout di default 3s;
+senza responder ottieni un errore esplicito.
+
+---
+
+## 5. JetStream
+
+Da connesso, espandi **JetStream** nel tree:
+
+- **Stream** → nome, `N msg · dimensione · subjects`.
+- Espandi uno stream → **consumer** con `pending` e `ack pending`.
+
+### Operazioni distruttive (doppia conferma)
+Dal menu contestuale (icona cestino / tasto destro):
+
+- **Purge Stream** — svuota tutti i messaggi dello stream.
+- **Delete Consumer** — elimina un consumer.
+
+Entrambe richiedono **due conferme modali** e **non sono mai l'azione di default** —
+il pulsante predefinito è Annulla. L'operazione non è reversibile.
+
+---
+
+## 6. Comandi (riassunto)
+
+| Comando | Cosa fa |
+|---|---|
+| `NATS Lens: Connect to Context` | Scegli un context e connettiti |
+| `NATS Lens: Disconnect` | Disconnetti e chiudi le subscription |
+| `NATS Lens: Publish Message` | Pubblica un payload (con header opzionali) |
+| `NATS Lens: Send Request (request-reply)` | Invia una request e apri la reply |
+| `NATS Lens: Subscribe to Subject` | Live-tail di un subject in un Output channel |
+| `NATS Lens: Stop a Subscription` | Ferma una subscription attiva |
+| `NATS Lens: Purge Stream` | Svuota uno stream (doppia conferma) |
+| `NATS Lens: Delete Consumer` | Elimina un consumer (doppia conferma) |
+| `NATS Lens: Refresh` | Ricarica il tree |
+
+## 7. Impostazioni
+
+| Chiave | Default | Descrizione |
+|---|---|---|
+| `natsLens.contextsDir` | `""` | Cartella dei context CLI. Vuoto = `~/.config/nats/context`. |
+| `natsLens.extraServers` | `[]` | URL server extra (`nats://host:4222`) mostrati accanto ai context. |
+
+---
+
+## 8. Problemi comuni
+
+- **Non vedo context** → verifica `~/.config/nats/context/*.json` o imposta `natsLens.contextsDir`.
+  I file non-JSON, `.bak` o corrotti vengono ignorati.
+- **Status bar bloccata su "reconnecting…"** → il server non è tornato entro i tentativi;
+  lo stato passa poi a `off`. Riconnetti quando il server è di nuovo su.
+- **Connessione fallita** → controlla URL/credenziali del context; l'errore riporta il motivo.
+- **JetStream vuoto o non disponibile** → il server potrebbe non avere JetStream abilitato,
+  o l'account/context non ha i permessi.

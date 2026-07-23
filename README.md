@@ -6,6 +6,8 @@
 
 **A [NATS](https://nats.io) client inside VS Code** — connect with the contexts you already have from the `nats` CLI, publish/subscribe/request on subjects, and browse JetStream streams and consumers without leaving the editor.
 
+📖 **[Guida all'utilizzo →](docs/USAGE.md)**
+
 ## Features
 
 - **Your CLI contexts, zero config** — reads `~/.config/nats/context/*.json` (the `nats` CLI format: url, user/password, token, `.creds`); the CLI's selected context is highlighted. Credentials are used to connect and **never displayed**.

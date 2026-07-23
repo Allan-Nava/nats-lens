@@ -68,9 +68,13 @@ export class NatsClient {
     this.statusListener?.(state, detail);
   }
 
-  async connectTo(ctx: NatsContext, timeoutMs = 5000): Promise<void> {
+  async connectTo(
+    ctx: NatsContext,
+    timeoutMs = 5000,
+    reconnect?: { maxReconnectAttempts?: number; reconnectTimeWait?: number }
+  ): Promise<void> {
     await this.disconnect();
-    this.nc = await connect({
+    const nc = await connect({
       servers: ctx.url,
       user: ctx.user,
       pass: ctx.password,
@@ -79,13 +83,22 @@ export class NatsClient {
         ? credsAuthenticator(fs.readFileSync(ctx.creds))
         : undefined,
       timeout: timeoutMs,
+      maxReconnectAttempts: reconnect?.maxReconnectAttempts,
+      reconnectTimeWait: reconnect?.reconnectTimeWait,
       name: 'nats-lens (vscode)',
     });
+    this.nc = nc;
     this.context = ctx;
     this.setState('connected');
-    void this.watchStatus(this.nc);
-    void this.nc.closed().then(() => {
-      if (this.nc === null) this.setState('closed');
+    void this.watchStatus(nc);
+    // When this connection closes for good (reconnect attempts exhausted, or
+    // an explicit close), flip to `closed` — unless a newer connection replaced it.
+    void nc.closed().then(() => {
+      if (this.nc === nc) {
+        this.nc = null;
+        this.context = null;
+        this.setState('closed');
+      }
     });
   }
 

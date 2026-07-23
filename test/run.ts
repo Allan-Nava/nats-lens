@@ -213,18 +213,31 @@ try {
     await assert.rejects(() => client.request('lens.nobody.home', 'ping', 500));
   });
 
-  // NL-7: killing the server must flip the client off "connected" and notify.
+  // NL-7: killing the server must flip the client off "connected" and, once
+  // the (bounded) reconnect attempts are exhausted, settle on "closed".
   // Kept last: it takes the throwaway server down.
-  await test('integration: detects server drop and notifies (NL-7)', async () => {
+  await test('integration: server drop → reconnecting → closed (NL-7)', async () => {
+    await client.connectTo(
+      { name: 'test', description: '', url: `nats://127.0.0.1:${port}`, source: '(test)', selected: false },
+      5000,
+      { maxReconnectAttempts: 3, reconnectTimeWait: 150 }
+    );
     const events: string[] = [];
     client.onStatus((s) => events.push(s));
     assert.strictEqual(client.connectionState, 'connected');
+
+    const waitFor = async (pred: () => boolean, ms = 6000) => {
+      for (let i = 0; i < ms / 50 && !pred(); i++) await new Promise((r) => setTimeout(r, 50));
+    };
+
     server!.kill('SIGKILL');
-    for (let i = 0; i < 50 && client.connectionState === 'connected'; i++) {
-      await new Promise((r) => setTimeout(r, 100));
-    }
+    await waitFor(() => client.connectionState === 'reconnecting');
     assert.strictEqual(client.connectionState, 'reconnecting');
     assert.ok(events.includes('reconnecting'), 'expected a reconnecting status event');
+
+    await waitFor(() => client.connectionState === 'closed');
+    assert.strictEqual(client.connectionState, 'closed', 'must settle on closed after reconnects fail');
+    assert.ok(events.includes('closed'), 'expected a closed status event');
   });
 
   await client.disconnect();
