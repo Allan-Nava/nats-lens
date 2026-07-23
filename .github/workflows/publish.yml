@@ -22,6 +22,30 @@ jobs:
         run: npm run build
       - name: Package vsix
         run: npm run package
+      - name: Find generated vsix
+        id: find_vsix
+        run: |
+          VSIX=$(ls *.vsix | head -n1 || true)
+          if [ -z "$VSIX" ]; then echo "No .vsix found"; exit 1; fi
+          echo "vsix=$VSIX" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+      - name: Upload VSIX to Release
+        uses: actions/upload-release-asset@v2
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.find_vsix.outputs.vsix }}
+          asset_name: ${{ steps.find_vsix.outputs.vsix }}
+          asset_content_type: application/octet-stream
+
       - name: Publish to Marketplace
         env:
           VSCE_TOKEN: ${{ secrets.VSCE_TOKEN }}
