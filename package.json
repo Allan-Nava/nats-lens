@@ -45,22 +45,57 @@
       ]
     },
     "commands": [
-      { "command": "natsLens.refresh", "title": "NATS Lens: Refresh", "icon": "$(refresh)" },
-      { "command": "natsLens.connect", "title": "NATS Lens: Connect to Context" },
-      { "command": "natsLens.disconnect", "title": "NATS Lens: Disconnect" },
-      { "command": "natsLens.publish", "title": "NATS Lens: Publish Message" },
-      { "command": "natsLens.request", "title": "NATS Lens: Send Request (request-reply)" },
-      { "command": "natsLens.subscribe", "title": "NATS Lens: Subscribe to Subject" },
-      { "command": "natsLens.unsubscribe", "title": "NATS Lens: Stop a Subscription" }
+      {
+        "command": "natsLens.refresh",
+        "title": "NATS Lens: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "natsLens.connect",
+        "title": "NATS Lens: Connect to Context"
+      },
+      {
+        "command": "natsLens.disconnect",
+        "title": "NATS Lens: Disconnect"
+      },
+      {
+        "command": "natsLens.publish",
+        "title": "NATS Lens: Publish Message"
+      },
+      {
+        "command": "natsLens.request",
+        "title": "NATS Lens: Send Request (request-reply)"
+      },
+      {
+        "command": "natsLens.subscribe",
+        "title": "NATS Lens: Subscribe to Subject"
+      },
+      {
+        "command": "natsLens.unsubscribe",
+        "title": "NATS Lens: Stop a Subscription"
+      }
     ],
     "menus": {
       "view/title": [
-        { "command": "natsLens.refresh", "when": "view == natsLens.explorer", "group": "navigation" }
+        {
+          "command": "natsLens.refresh",
+          "when": "view == natsLens.explorer",
+          "group": "navigation"
+        }
       ],
       "view/item/context": [
-        { "command": "natsLens.connect", "when": "view == natsLens.explorer && viewItem == context" },
-        { "command": "natsLens.disconnect", "when": "view == natsLens.explorer && viewItem == context-connected" },
-        { "command": "natsLens.unsubscribe", "when": "view == natsLens.explorer && viewItem == subscription" }
+        {
+          "command": "natsLens.connect",
+          "when": "view == natsLens.explorer && viewItem == context"
+        },
+        {
+          "command": "natsLens.disconnect",
+          "when": "view == natsLens.explorer && viewItem == context-connected"
+        },
+        {
+          "command": "natsLens.unsubscribe",
+          "when": "view == natsLens.explorer && viewItem == subscription"
+        }
       ]
     },
     "configuration": {
@@ -73,7 +108,9 @@
         },
         "natsLens.extraServers": {
           "type": "array",
-          "items": { "type": "string" },
+          "items": {
+            "type": "string"
+          },
           "default": [],
           "description": "Extra server URLs (nats://host:4222) shown alongside CLI contexts."
         }
@@ -84,7 +121,7 @@
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "test": "node esbuild.mjs --test && node .test/run.mjs",
-    "package": "vsce package",
+    "package": "vsce package --no-dependencies",
     "vscode:prepublish": "npm run build",
     "create-issues": "node create-issues.js"
   },
@@ -92,15 +129,17 @@
     "nats": "^2.29.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.0",
-    "@types/vscode": "^1.85.0",
-    "esbuild": "^0.24.0",
-    "typescript": "^5.5.0",
-    "semantic-release": "^21.0.0",
     "@semantic-release/changelog": "^6.0.0",
+    "@semantic-release/commit-analyzer": "^9.0.0",
+    "@semantic-release/exec": "^6.0.3",
     "@semantic-release/git": "^10.0.0",
     "@semantic-release/github": "^9.0.0",
-    "@semantic-release/commit-analyzer": "^9.0.0",
-    "@semantic-release/release-notes-generator": "^10.0.0"
+    "@semantic-release/release-notes-generator": "^10.0.0",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.24.0",
+    "semantic-release": "^21.0.0",
+    "typescript": "^5.5.0"
   }
 }

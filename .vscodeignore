@@ -1,5 +1,6 @@
 .vscode/**
 .github/**
+.claude/**
 src/**
 test/**
 .test/**
@@ -7,5 +8,12 @@ out/**
 node_modules/**
 esbuild.mjs
 tsconfig.json
-*.map
+**/*.map
 .gitignore
+.releaserc.json
+CLAUDE.md
+AGENTS.md
+BACKLOG.md
+CONTRIBUTING.md
+create-issues.js
+*.vsix
