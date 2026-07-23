@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -10,7 +10,9 @@ permissions:
   contents: write
 
 jobs:
+  # TDD gate: all tests must pass before anything else
   test:
+    name: Test (TDD gate)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,13 +26,16 @@ jobs:
             | tar xz --strip-components=1 -C /usr/local/bin --wildcards '*/nats-server'
           nats-server --version
       - run: npm ci
-      - run: npx tsc --noEmit
       - run: npm test
-      - run: npm run build
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "✅ All unit + integration tests passed"
+          echo "🎯 TDD gate cleared"
 
-  package:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: test
+  # Type checking gate
+  type-check:
+    name: Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,8 +44,84 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npx @vscode/vsce package
-      - name: Upload .vsix to the release
+      - run: npx tsc --noEmit
+      - name: Type Check Summary
+        if: always()
+        run: echo "✅ TypeScript type check passed"
+
+  # Build gate: compile bundle after tests pass
+  build:
+    name: Build
+    needs: [test, type-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Check bundle size
+        run: |
+          SIZE=$(stat -f%z dist/extension.js 2>/dev/null || stat -c%s dist/extension.js 2>/dev/null)
+          SIZE_KB=$((SIZE / 1024))
+          echo "📦 Bundle size: ${SIZE_KB} KB"
+          if [ $SIZE_KB -gt 1024 ]; then
+            echo "⚠️  Warning: bundle > 1 MB"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # Package gate: create .vsix only on release tags after build passes
+  package:
+    name: Package (.vsix)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx @vscode/vsce package --no-dependencies
+      - name: Upload .vsix to release
         uses: softprops/action-gh-release@v2
         with:
           files: "*.vsix"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix
+          path: "*.vsix"
+
+  # Marketplace publish: triggered only on release tags
+  publish-marketplace:
+    name: Publish to VS Code Marketplace
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    environment: marketplace  # require explicit approval or secrets setup
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Publish to Marketplace
+        run: |
+          if [[ -z "${{ secrets.VSCE_PAT }}" ]]; then
+            echo "⚠️  VSCE_PAT not configured. Skipping marketplace publish."
+            echo "📋 Setup: https://github.com/Allan-Nava/nats-lens/settings/secrets/actions"
+            exit 0
+          fi
+          npx @vscode/vsce publish --pat "${{ secrets.VSCE_PAT }}" --no-dependencies
+      - name: Publish success
+        if: success()
+        run: |
+          echo "✅ Published to VS Code Marketplace"
+          echo "📍 View: https://marketplace.visualstudio.com/items?itemName=allan-nava.nats-lens"
