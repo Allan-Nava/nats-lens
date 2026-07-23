@@ -1,3 +1,17 @@
+## [1.2.0] — 2026-07-23
+
+### Aggiunto
+- **Publish con headers** (NL-14): il comando publish chiede header opzionali (`k=v` o `k: v`, multi-valore, righe vuote ignorate); gli errori di parsing bloccano l'invio. Gli header vengono ora inviati davvero sul messaggio NATS.
+- **Filtro subject lato client** (NL-15): la subscribe accetta un pattern di filtro opzionale (wildcard NATS `*` e `>`) per mostrare nell'Output solo i messaggi che combaciano.
+- **Preview payload troncata** (NL-16): i messaggi grandi nell'Output sono limitati (cap 4000 caratteri) con nota sulla dimensione totale in byte, così il canale non viene intasato.
+
+### Modificato
+- CI/CD passata al modello **tag-driven** (`ci.yml` allineato a `ansible-vars-lens`): gate test + type-check + build, job `package` e `publish-marketplace` solo sui tag `v*`.
+- `BACKLOG.md` consolidato in un'unica lista con ID `NL-n` univoci.
+
+### Rimosso
+- `semantic-release` e `.releaserc.json` (in conflitto con il modello a tag manuali e mai in grado di pubblicare sul Marketplace: gli eventi generati dal `GITHUB_TOKEN` non fanno scattare i workflow).
+
 # [1.1.0](https://github.com/Allan-Nava/nats-lens/compare/v1.0.1...v1.1.0) (2026-07-23)
 
 

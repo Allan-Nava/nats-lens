@@ -124,4 +124,4 @@ jobs:
         if: success()
         run: |
           echo "✅ Published to VS Code Marketplace"
-          echo "📍 View: https://marketplace.visualstudio.com/items?itemName=allan-nava.nats-lens"
+          echo "📍 View: https://marketplace.visualstudio.com/items?itemName=allannava95.nats-lens"
