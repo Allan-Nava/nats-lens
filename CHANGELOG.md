@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/Allan-Nava/nats-lens/compare/v1.0.0...v1.0.1) (2026-07-23)
+
+
+### Bug Fixes
+
+* separate upload-release-asset steps for push-tag and release published events ([0b68c62](https://github.com/Allan-Nava/nats-lens/commit/0b68c6276437113012b30d579ed014cbcb96f0de))
+
 # 1.0.0 (2026-07-23)
 
 
