@@ -11,7 +11,10 @@ type Node =
   | { kind: 'stream'; stream: StreamSummary }
   | { kind: 'consumer'; label: string; stream?: string; name?: string }
   | { kind: 'subs-root' }
-  | { kind: 'subscription'; subject: string };
+  | { kind: 'subscription'; subject: string }
+  | { kind: 'kv-root' }
+  | { kind: 'kv-bucket'; bucket: string; values: number; bytes: number }
+  | { kind: 'kv-key'; bucket: string; key: string };
 
 class ActiveSubs {
   readonly map = new Map<string, { sub: Subscription; channel: vscode.OutputChannel }>();
@@ -84,6 +87,25 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
         item.contextValue = 'subscription';
         return item;
       }
+      case 'kv-root': {
+        const item = new vscode.TreeItem('Key-Value', vscode.TreeItemCollapsibleState.Collapsed);
+        item.iconPath = new vscode.ThemeIcon('symbol-key');
+        return item;
+      }
+      case 'kv-bucket': {
+        const item = new vscode.TreeItem(node.bucket, vscode.TreeItemCollapsibleState.Collapsed);
+        item.description = `${node.values} values · ${prettyBytes(node.bytes)}`;
+        item.iconPath = new vscode.ThemeIcon('archive');
+        item.contextValue = 'kv-bucket';
+        return item;
+      }
+      case 'kv-key': {
+        const item = new vscode.TreeItem(node.key, vscode.TreeItemCollapsibleState.None);
+        item.iconPath = new vscode.ThemeIcon('symbol-string');
+        item.contextValue = 'kv-key';
+        item.command = { command: 'natsLens.kvGet', title: 'Open value', arguments: [node] };
+        return item;
+      }
     }
   }
 
@@ -102,6 +124,7 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
       }
       if (this.client.connectionState === 'connected') {
         nodes.push({ kind: 'streams-root' });
+        nodes.push({ kind: 'kv-root' });
         if (this.subs.map.size) nodes.push({ kind: 'subs-root' });
       }
       return nodes;
@@ -129,6 +152,22 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
     }
     if (node.kind === 'subs-root') {
       return [...this.subs.map.keys()].map((subject) => ({ kind: 'subscription' as const, subject }));
+    }
+    if (node.kind === 'kv-root') {
+      try {
+        const buckets = await this.client.kvBuckets();
+        return buckets.map((b) => ({ kind: 'kv-bucket' as const, bucket: b.bucket, values: b.values, bytes: b.bytes }));
+      } catch {
+        return [];
+      }
+    }
+    if (node.kind === 'kv-bucket') {
+      try {
+        const keys = await this.client.kvKeys(node.bucket);
+        return keys.map((key) => ({ kind: 'kv-key' as const, bucket: node.bucket, key }));
+      } catch {
+        return [];
+      }
     }
     return [];
   }
@@ -396,6 +435,52 @@ export function activate(context: vscode.ExtensionContext): void {
         tree.refresh();
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS create consumer failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.kvGet', async (node?: { bucket?: string; key?: string }) => {
+      const bucket = node?.bucket;
+      const key = node?.key;
+      if (!bucket || !key) return;
+      try {
+        const entry = await client.kvGet(bucket, key);
+        if (!entry) {
+          void vscode.window.showWarningMessage(`NATS KV: ${bucket}/${key} not found`);
+          return;
+        }
+        const { text, kind } = renderPayload(new TextEncoder().encode(entry.value));
+        const header = `// KV ${bucket}/${key} · rev ${entry.revision}\n\n`;
+        const doc = await vscode.workspace.openTextDocument({
+          content: header + text,
+          language: kind === 'json' ? 'json' : 'plaintext',
+        });
+        await vscode.window.showTextDocument(doc, { preview: true });
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS KV get failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.kvSet', async (node?: { bucket?: string }) => {
+      const bucket =
+        node?.bucket ??
+        (await vscode.window.showInputBox({
+          prompt: 'KV bucket (esistente o nuovo)',
+          validateInput: (v) => (/^[A-Za-z0-9_-]+$/.test(v.trim()) ? undefined : 'use letters, digits, _ or -'),
+        }));
+      if (!bucket) return;
+      const key = await vscode.window.showInputBox({
+        prompt: `Key in "${bucket}"`,
+        validateInput: (v) => (v.trim().length ? undefined : 'key required'),
+      });
+      if (!key) return;
+      const value = await vscode.window.showInputBox({ prompt: `Value for ${bucket}/${key.trim()}` });
+      if (value === undefined) return;
+      try {
+        const rev = await client.kvPut(bucket, key.trim(), value);
+        void vscode.window.showInformationMessage(`NATS KV: set ${bucket}/${key.trim()} (rev ${rev})`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS KV set failed — ${err}`);
       }
     })
   );

@@ -101,6 +101,15 @@
         "command": "natsLens.deleteConsumer",
         "title": "NATS Lens: Delete Consumer",
         "icon": "$(trash)"
+      },
+      {
+        "command": "natsLens.kvGet",
+        "title": "NATS Lens: Open KV Value"
+      },
+      {
+        "command": "natsLens.kvSet",
+        "title": "NATS Lens: Set KV Value",
+        "icon": "$(edit)"
       }
     ],
     "menus": {
@@ -142,6 +151,11 @@
         {
           "command": "natsLens.deleteConsumer",
           "when": "view == natsLens.explorer && viewItem == consumer",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.kvSet",
+          "when": "view == natsLens.explorer && viewItem == kv-bucket",
           "group": "inline"
         }
       ]

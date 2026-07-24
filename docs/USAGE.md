@@ -122,6 +122,17 @@ il pulsante predefinito è Annulla. L'operazione non è reversibile.
 
 ---
 
+## 5b. Key-Value (KV)
+
+Da connesso, espandi **Key-Value** nel tree: mostra i **bucket** KV (`N values · dimensione`);
+espandi un bucket per vederne le **chiavi**.
+
+- **Leggi un valore** — clicca una chiave: il valore si apre come documento (JSON/testo) con `rev`.
+- **Scrivi un valore** — dal menu del bucket (icona matita) o Command Palette → **NATS Lens: Set KV Value**:
+  bucket (esistente o nuovo), key, value. Restituisce la nuova revisione.
+
+---
+
 ## 6. Comandi (riassunto)
 
 | Comando | Cosa fa |
@@ -136,6 +147,8 @@ il pulsante predefinito è Annulla. L'operazione non è reversibile.
 | `NATS Lens: Create Consumer` | Crea un consumer durable su uno stream |
 | `NATS Lens: Purge Stream` | Svuota uno stream (doppia conferma) |
 | `NATS Lens: Delete Consumer` | Elimina un consumer (doppia conferma) |
+| `NATS Lens: Open KV Value` | Apre il valore di una chiave KV |
+| `NATS Lens: Set KV Value` | Scrive una chiave in un bucket KV |
 | `NATS Lens: Refresh` | Ricarica il tree |
 
 ## 7. Impostazioni

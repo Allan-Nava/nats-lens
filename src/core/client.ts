@@ -40,6 +40,12 @@ export interface ConsumerSummary {
   ackPending: number;
 }
 
+export interface KvBucketSummary {
+  bucket: string;
+  values: number;
+  bytes: number;
+}
+
 export interface NewConsumer {
   durableName: string;
   ackPolicy?: 'explicit' | 'none' | 'all';
@@ -254,6 +260,43 @@ export class NatsClient {
       data: m.data,
       headers: hdrs.length ? hdrs : undefined,
     };
+  }
+
+  /** Lists Key-Value buckets (JetStream streams with the `KV_` prefix) — NL-10. */
+  async kvBuckets(): Promise<KvBucketSummary[]> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    const out: KvBucketSummary[] = [];
+    for await (const si of jsm.streams.list()) {
+      if (!si.config.name.startsWith('KV_')) continue;
+      out.push({ bucket: si.config.name.slice(3), values: si.state.messages, bytes: si.state.bytes });
+    }
+    return out.sort((a, b) => a.bucket.localeCompare(b.bucket));
+  }
+
+  /** Lists the keys in a KV bucket. */
+  async kvKeys(bucket: string): Promise<string[]> {
+    this.assertConnected();
+    const kv = await this.nc!.jetstream().views.kv(bucket);
+    const keys: string[] = [];
+    for await (const k of await kv.keys()) keys.push(k);
+    return keys.sort();
+  }
+
+  /** Reads the latest value of a KV key, or null if absent. */
+  async kvGet(bucket: string, key: string): Promise<{ value: string; revision: number } | null> {
+    this.assertConnected();
+    const kv = await this.nc!.jetstream().views.kv(bucket);
+    const e = await kv.get(key);
+    if (!e) return null;
+    return { value: sc.decode(e.value), revision: e.revision };
+  }
+
+  /** Writes a KV key and returns the new revision. Creates the bucket if missing. */
+  async kvPut(bucket: string, key: string, value: string): Promise<number> {
+    this.assertConnected();
+    const kv = await this.nc!.jetstream().views.kv(bucket);
+    return kv.put(key, sc.encode(value));
   }
 
   private assertConnected(): void {

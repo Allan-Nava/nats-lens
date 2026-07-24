@@ -233,6 +233,22 @@ try {
     assert.ok(names.includes('reader'), 'new consumer must appear in the list');
   });
 
+  await test('integration: KV bucket put/get/keys/list (NL-10)', async () => {
+    const rev = await client.kvPut('CONFIG', 'greeting', 'ciao');
+    assert.ok(rev >= 1, 'put must return a revision');
+    const got = await client.kvGet('CONFIG', 'greeting');
+    assert.strictEqual(got?.value, 'ciao');
+    assert.strictEqual(got?.revision, rev);
+
+    await client.kvPut('CONFIG', 'lang', 'it');
+    const keys = await client.kvKeys('CONFIG');
+    assert.deepStrictEqual(keys.sort(), ['greeting', 'lang']);
+
+    const buckets = (await client.kvBuckets()).map((b) => b.bucket);
+    assert.ok(buckets.includes('CONFIG'), 'bucket must be listed');
+    assert.strictEqual(await client.kvGet('CONFIG', 'missing'), null);
+  });
+
   await test('integration: request gets an error without a responder', async () => {
     await assert.rejects(() => client.request('lens.nobody.home', 'ping', 500));
   });

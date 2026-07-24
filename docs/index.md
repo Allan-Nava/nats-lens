@@ -36,6 +36,11 @@ description: Client NATS dentro VS Code — context CLI, publish/subscribe/reque
     <p>Stream con messaggi, byte e subjects; consumer con pending e ack-pending. Leggi messaggi per sequenza o ultimo-per-subject; purge stream e delete consumer con doppia conferma.</p>
   </div>
   <div class="card">
+    <div class="ico">🔑</div>
+    <h3>Key-Value browser</h3>
+    <p>Sfoglia i bucket KV e le loro chiavi nel tree; leggi un valore (con revisione) o scrivine uno nuovo.</p>
+  </div>
+  <div class="card">
     <div class="ico">🟢</div>
     <h3>Stato connessione affidabile</h3>
     <p>La status bar riflette lo stato reale: connesso, <em>reconnecting…</em> se il server cade, off a chiusura definitiva.</p>
