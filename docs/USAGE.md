@@ -142,6 +142,7 @@ espandi un bucket per vederne le **chiavi**.
 | Comando | Cosa fa |
 |---|---|
 | `NATS Lens: Connect to Context` | Scegli un context e connettiti |
+| `NATS Lens: Connect with Token…` | Connessione ad-hoc con token mascherato (solo in memoria) |
 | `NATS Lens: Disconnect` | Disconnetti e chiudi le subscription |
 | `NATS Lens: Publish Message` | Pubblica un payload (con header opzionali) |
 | `NATS Lens: Send Request (request-reply)` | Invia una request e apri la reply |

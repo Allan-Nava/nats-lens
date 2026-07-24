@@ -613,6 +613,42 @@ export function activate(context: vscode.ExtensionContext): void {
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS: cannot monitor $SYS — ${err}`);
       }
+    }),
+
+    // NL-19: connect to an ad-hoc server with a token entered at runtime. The
+    // token is masked on input, kept only in the in-memory context, and never
+    // persisted or logged (same guarantee as CLI-context credentials).
+    vscode.commands.registerCommand('natsLens.connectWithToken', async () => {
+      const url = await vscode.window.showInputBox({
+        prompt: 'Server URL',
+        value: 'nats://localhost:4222',
+        validateInput: (v) => (/^nats:\/\/.+/.test(v.trim()) ? undefined : 'use nats://host:port'),
+      });
+      if (!url) return;
+      const token = await vscode.window.showInputBox({
+        prompt: 'Token (masked — kept only in memory, never stored)',
+        password: true,
+      });
+      if (token === undefined) return;
+      const ctx: NatsContext = {
+        name: url.trim(),
+        description: '',
+        url: url.trim(),
+        token: token.trim() || undefined,
+        source: '(token)',
+        selected: false,
+      };
+      try {
+        await vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Window, title: `NATS: connecting to ${ctx.name}…` },
+          () => client.connectTo(ctx)
+        );
+        void vscode.window.showInformationMessage(`NATS: connected to ${ctx.name}`);
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS: connection to ${ctx.name} failed — ${err}`);
+      }
+      updateStatus();
+      tree.refresh();
     })
   );
 

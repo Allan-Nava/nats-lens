@@ -126,6 +126,10 @@
       {
         "command": "natsLens.monitorSys",
         "title": "NATS Lens: Monitor $SYS Events"
+      },
+      {
+        "command": "natsLens.connectWithToken",
+        "title": "NATS Lens: Connect with Token…"
       }
     ],
     "menus": {
