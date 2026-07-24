@@ -1,3 +1,8 @@
+## [1.4.0] — 2026-07-24
+
+### Aggiunto
+- **Browser Key-Value** (NL-10): sezione **Key-Value** nel tree con i bucket KV e le loro chiavi; lettura del valore come documento (con revisione) e comando **Set KV Value** per scrivere una chiave. Core: `client.kvBuckets/kvKeys/kvGet/kvPut`.
+
 ## [1.3.0] — 2026-07-24
 
 ### Aggiunto
