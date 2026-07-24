@@ -103,6 +103,11 @@
         "icon": "$(trash)"
       },
       {
+        "command": "natsLens.updateConsumer",
+        "title": "NATS Lens: Modify Consumer",
+        "icon": "$(gear)"
+      },
+      {
         "command": "natsLens.kvGet",
         "title": "NATS Lens: Open KV Value"
       },
@@ -130,6 +135,19 @@
       {
         "command": "natsLens.connectWithToken",
         "title": "NATS Lens: Connect with Token…"
+      },
+      {
+        "command": "natsLens.inspectPayload",
+        "title": "NATS Lens: Inspect Payload as base64/hex"
+      },
+      {
+        "command": "natsLens.osGet",
+        "title": "NATS Lens: Open Object"
+      },
+      {
+        "command": "natsLens.osPut",
+        "title": "NATS Lens: Upload Object",
+        "icon": "$(cloud-upload)"
       }
     ],
     "menus": {
@@ -169,6 +187,11 @@
           "group": "inline"
         },
         {
+          "command": "natsLens.updateConsumer",
+          "when": "view == natsLens.explorer && viewItem == consumer",
+          "group": "inline"
+        },
+        {
           "command": "natsLens.deleteConsumer",
           "when": "view == natsLens.explorer && viewItem == consumer",
           "group": "inline"
@@ -176,6 +199,11 @@
         {
           "command": "natsLens.kvSet",
           "when": "view == natsLens.explorer && viewItem == kv-bucket",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.osPut",
+          "when": "view == natsLens.explorer && viewItem == os-bucket",
           "group": "inline"
         }
       ]

@@ -37,3 +37,9 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 - [x] **NL-18 — Export/Import subscriptions**: core `serializeSubscriptions`/`parseSubscriptions` (JSON versionato, subject validati); comandi **Export/Import Subscriptions** su file.
 - [x] **NL-19 — Credential helper UI**: comando **Connect with Token…** — token mascherato all'input, tenuto solo in memoria, mai persistito né loggato. (Persistenza sicura via SecretStorage: follow-up.)
 - [ ] **NL-20 — Telemetria opt-in**: *non implementata di proposito.* Richiederebbe un endpoint di raccolta e una decisione di prodotto su privacy/consenso; non aggiungo codice che trasmette dati senza quel design. Da riaprire con una scelta esplicita.
+
+## v1.6 — Inspector & consumer tuning
+
+- [x] **NL-21 — Payload inspector (base64/hex)**: core `toBase64`/`toHex`; comando **Inspect Payload as base64/hex** sull'editor attivo.
+- [x] **NL-22 — Modifica consumer**: `client.updateConsumer()` (`max_deliver`/`ack_wait`); comando **Modify Consumer** dal menu del consumer.
+- [x] **NL-23 — Object Store browser**: `client.osBuckets/osList/osGet/osPut` (via `putBlob`/`getBlob`); sezione **Object Store** nel tree (bucket → oggetti), apertura oggetto e **Upload Object** da file.

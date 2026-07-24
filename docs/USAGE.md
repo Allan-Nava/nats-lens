@@ -110,10 +110,13 @@ Dal menu contestuale di uno stream (icona documento) o Command Palette → **NAT
 Il messaggio si apre come documento con un'intestazione (`seq`, subject, timestamp, header)
 e il payload renderizzato (JSON indentato o testo).
 
-### Creare un consumer
+### Creare / modificare un consumer
 Dal menu contestuale di uno stream (icona `+`) o Command Palette → **NATS Lens: Create Consumer**:
 nome durable, **ack policy** (`explicit`/`all`/`none`), **deliver policy** (`all`/`new`/`last`)
 e un **filter subject** opzionale. Il consumer creato compare subito nel tree.
+
+Dal menu di un consumer (icona ingranaggio) → **NATS Lens: Modify Consumer** per aggiornare
+`max deliver` e `ack wait` (ms) di un consumer esistente.
 
 ### Operazioni distruttive (doppia conferma)
 Dal menu contestuale (icona cestino / tasto destro):
@@ -137,6 +140,19 @@ espandi un bucket per vederne le **chiavi**.
 
 ---
 
+## 5c. Object Store
+
+Da connesso, espandi **Object Store** nel tree: bucket → oggetti (`dimensione`).
+
+- **Apri un oggetto** — clicca un oggetto: il contenuto si apre come documento.
+- **Carica un oggetto** — dal menu del bucket (icona upload) → **NATS Lens: Upload Object**: scegli un file, viene salvato con il suo nome.
+
+### Ispezione payload (base64/hex)
+Command Palette → **NATS Lens: Inspect Payload as base64/hex**: codifica i byte del documento
+attivo in base64 o esadecimale (utile per contenuti binari).
+
+---
+
 ## 6. Comandi (riassunto)
 
 | Comando | Cosa fa |
@@ -150,10 +166,14 @@ espandi un bucket per vederne le **chiavi**.
 | `NATS Lens: Stop a Subscription` | Ferma una subscription attiva |
 | `NATS Lens: Read Stream Message` | Legge un messaggio dello stream (seq / last-by-subject) |
 | `NATS Lens: Create Consumer` | Crea un consumer durable su uno stream |
+| `NATS Lens: Modify Consumer` | Aggiorna max deliver / ack wait di un consumer |
 | `NATS Lens: Purge Stream` | Svuota uno stream (doppia conferma) |
 | `NATS Lens: Delete Consumer` | Elimina un consumer (doppia conferma) |
 | `NATS Lens: Open KV Value` | Apre il valore di una chiave KV |
 | `NATS Lens: Set KV Value` | Scrive una chiave in un bucket KV |
+| `NATS Lens: Open Object` | Apre il contenuto di un oggetto Object Store |
+| `NATS Lens: Upload Object` | Carica un file in un bucket Object Store |
+| `NATS Lens: Inspect Payload as base64/hex` | Codifica il documento attivo in base64/hex |
 | `NATS Lens: Export Subscriptions` | Salva le subscription attive su file JSON |
 | `NATS Lens: Import Subscriptions` | Sottoscrive i subject da un file JSON |
 | `NATS Lens: Validate JSON against Schema` | Valida il documento JSON attivo contro uno schema |

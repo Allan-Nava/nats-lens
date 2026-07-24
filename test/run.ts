@@ -13,6 +13,8 @@ import {
   isValidSubject,
   subjectMatches,
   previewPayload,
+  toBase64,
+  toHex,
 } from '../src/core/payload';
 import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
@@ -154,6 +156,13 @@ await test('schema: validateJson checks type, required, enum, items (NL-17)', ()
   assert.strictEqual(validateJson(3.5, { type: 'integer' }).length, 1);
 });
 
+await test('payload: base64 and hex inspector encodings (NL-21)', () => {
+  assert.strictEqual(toBase64(new TextEncoder().encode('hi')), 'aGk=');
+  assert.strictEqual(toHex(new Uint8Array([0, 255, 16])), '00ff10');
+  assert.strictEqual(toHex(new Uint8Array([])), '');
+  assert.strictEqual(toBase64(new Uint8Array([])), '');
+});
+
 // --- integration: throwaway nats-server --------------------------------------
 const bin = process.env.NATS_SERVER_BIN || 'nats-server';
 let server: ChildProcess | null = null;
@@ -270,6 +279,12 @@ try {
     assert.ok(names.includes('reader'), 'new consumer must appear in the list');
   });
 
+  await test('integration: update a consumer config (NL-22)', async () => {
+    const updated = await client.updateConsumer('LENS', 'reader', { maxDeliver: 5, ackWaitMs: 2000 });
+    assert.strictEqual(updated.maxDeliver, 5);
+    assert.strictEqual(updated.ackWaitMs, 2000);
+  });
+
   await test('integration: KV bucket put/get/keys/list (NL-10)', async () => {
     const rev = await client.kvPut('CONFIG', 'greeting', 'ciao');
     assert.ok(rev >= 1, 'put must return a revision');
@@ -284,6 +299,23 @@ try {
     const buckets = (await client.kvBuckets()).map((b) => b.bucket);
     assert.ok(buckets.includes('CONFIG'), 'bucket must be listed');
     assert.strictEqual(await client.kvGet('CONFIG', 'missing'), null);
+  });
+
+  await test('integration: Object Store put/get/list/buckets (NL-23)', async () => {
+    const data = new TextEncoder().encode('blob-data');
+    const info = await client.osPut('ASSETS', 'file.txt', data);
+    assert.strictEqual(info.name, 'file.txt');
+    assert.ok(info.size >= data.length);
+
+    const got = await client.osGet('ASSETS', 'file.txt');
+    assert.strictEqual(new TextDecoder().decode(got!), 'blob-data');
+
+    const names = (await client.osList('ASSETS')).map((o) => o.name);
+    assert.ok(names.includes('file.txt'));
+
+    const buckets = (await client.osBuckets()).map((b) => b.bucket);
+    assert.ok(buckets.includes('ASSETS'), 'bucket must be listed');
+    assert.strictEqual(await client.osGet('ASSETS', 'missing'), null);
   });
 
   await test('integration: request gets an error without a responder', async () => {

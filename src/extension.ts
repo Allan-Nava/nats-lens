@@ -2,7 +2,14 @@ import * as vscode from 'vscode';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
 import { NatsClient, StreamSummary } from './core/client';
-import { formatMessageLine, isValidSubject, renderPayload, subjectMatches } from './core/payload';
+import {
+  formatMessageLine,
+  isValidSubject,
+  renderPayload,
+  subjectMatches,
+  toBase64,
+  toHex,
+} from './core/payload';
 import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
 import { validateJson, JsonSchema } from './core/schema';
@@ -16,7 +23,10 @@ type Node =
   | { kind: 'subscription'; subject: string }
   | { kind: 'kv-root' }
   | { kind: 'kv-bucket'; bucket: string; values: number; bytes: number }
-  | { kind: 'kv-key'; bucket: string; key: string };
+  | { kind: 'kv-key'; bucket: string; key: string }
+  | { kind: 'os-root' }
+  | { kind: 'os-bucket'; bucket: string; bytes: number }
+  | { kind: 'os-object'; bucket: string; name: string; size: number };
 
 class ActiveSubs {
   readonly map = new Map<string, { sub: Subscription; channel: vscode.OutputChannel }>();
@@ -108,6 +118,26 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
         item.command = { command: 'natsLens.kvGet', title: 'Open value', arguments: [node] };
         return item;
       }
+      case 'os-root': {
+        const item = new vscode.TreeItem('Object Store', vscode.TreeItemCollapsibleState.Collapsed);
+        item.iconPath = new vscode.ThemeIcon('file-binary');
+        return item;
+      }
+      case 'os-bucket': {
+        const item = new vscode.TreeItem(node.bucket, vscode.TreeItemCollapsibleState.Collapsed);
+        item.description = prettyBytes(node.bytes);
+        item.iconPath = new vscode.ThemeIcon('archive');
+        item.contextValue = 'os-bucket';
+        return item;
+      }
+      case 'os-object': {
+        const item = new vscode.TreeItem(node.name, vscode.TreeItemCollapsibleState.None);
+        item.description = prettyBytes(node.size);
+        item.iconPath = new vscode.ThemeIcon('file');
+        item.contextValue = 'os-object';
+        item.command = { command: 'natsLens.osGet', title: 'Open object', arguments: [node] };
+        return item;
+      }
     }
   }
 
@@ -127,6 +157,7 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
       if (this.client.connectionState === 'connected') {
         nodes.push({ kind: 'streams-root' });
         nodes.push({ kind: 'kv-root' });
+        nodes.push({ kind: 'os-root' });
         if (this.subs.map.size) nodes.push({ kind: 'subs-root' });
       }
       return nodes;
@@ -167,6 +198,22 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
       try {
         const keys = await this.client.kvKeys(node.bucket);
         return keys.map((key) => ({ kind: 'kv-key' as const, bucket: node.bucket, key }));
+      } catch {
+        return [];
+      }
+    }
+    if (node.kind === 'os-root') {
+      try {
+        const buckets = await this.client.osBuckets();
+        return buckets.map((b) => ({ kind: 'os-bucket' as const, bucket: b.bucket, bytes: b.bytes }));
+      } catch {
+        return [];
+      }
+    }
+    if (node.kind === 'os-bucket') {
+      try {
+        const objects = await this.client.osList(node.bucket);
+        return objects.map((o) => ({ kind: 'os-object' as const, bucket: node.bucket, name: o.name, size: o.size }));
       } catch {
         return [];
       }
@@ -387,6 +434,37 @@ export function activate(context: vscode.ExtensionContext): void {
           tree.refresh();
         } catch (err) {
           void vscode.window.showErrorMessage(`NATS delete consumer failed — ${err}`);
+        }
+      }
+    ),
+
+    vscode.commands.registerCommand(
+      'natsLens.updateConsumer',
+      async (node?: { stream?: string; name?: string }) => {
+        const stream = node?.stream;
+        const consumer = node?.name;
+        if (!stream || !consumer) return;
+        const maxRaw = await vscode.window.showInputBox({
+          prompt: `max deliver for "${consumer}" (-1 = unlimited)`,
+          validateInput: (v) => (/^-?\d+$/.test(v.trim()) ? undefined : 'integer'),
+        });
+        if (maxRaw === undefined) return;
+        const ackRaw = await vscode.window.showInputBox({
+          prompt: `ack wait (ms) for "${consumer}"`,
+          validateInput: (v) => (/^\d+$/.test(v.trim()) && Number(v) > 0 ? undefined : 'positive integer'),
+        });
+        if (ackRaw === undefined) return;
+        try {
+          const r = await client.updateConsumer(stream, consumer, {
+            maxDeliver: Number(maxRaw.trim()),
+            ackWaitMs: Number(ackRaw.trim()),
+          });
+          void vscode.window.showInformationMessage(
+            `NATS: updated ${consumer} — max deliver ${r.maxDeliver}, ack wait ${r.ackWaitMs}ms`
+          );
+          tree.refresh();
+        } catch (err) {
+          void vscode.window.showErrorMessage(`NATS update consumer failed — ${err}`);
         }
       }
     ),
@@ -649,6 +727,58 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       updateStatus();
       tree.refresh();
+    }),
+
+    vscode.commands.registerCommand('natsLens.osGet', async (node?: { bucket?: string; name?: string }) => {
+      const bucket = node?.bucket;
+      const name = node?.name;
+      if (!bucket || !name) return;
+      try {
+        const data = await client.osGet(bucket, name);
+        if (!data) {
+          void vscode.window.showWarningMessage(`NATS OS: ${bucket}/${name} not found`);
+          return;
+        }
+        const { text, kind } = renderPayload(data);
+        const doc = await vscode.workspace.openTextDocument({
+          content: `// OS ${bucket}/${name} · ${data.byteLength} bytes\n\n${text}`,
+          language: kind === 'json' ? 'json' : 'plaintext',
+        });
+        await vscode.window.showTextDocument(doc, { preview: true });
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS OS get failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.osPut', async (node?: { bucket?: string }) => {
+      const bucket = node?.bucket;
+      if (!bucket) return;
+      const picked = await vscode.window.showOpenDialog({ canSelectMany: false, openLabel: 'Upload to Object Store' });
+      if (!picked?.[0]) return;
+      try {
+        const data = await vscode.workspace.fs.readFile(picked[0]);
+        const name = picked[0].path.split('/').pop() || 'object';
+        const info = await client.osPut(bucket, name, data);
+        void vscode.window.showInformationMessage(`NATS OS: stored ${bucket}/${info.name} (${info.size} bytes)`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS OS put failed — ${err}`);
+      }
+    }),
+
+    // NL-21: inspect the active document's bytes as base64 or hex.
+    vscode.commands.registerCommand('natsLens.inspectPayload', async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        void vscode.window.showWarningMessage('NATS: open a document to inspect first');
+        return;
+      }
+      const enc = await vscode.window.showQuickPick(['base64', 'hex'], { placeHolder: 'Encode active document as…' });
+      if (!enc) return;
+      const bytes = new TextEncoder().encode(editor.document.getText());
+      const out = enc === 'base64' ? toBase64(bytes) : toHex(bytes);
+      const doc = await vscode.workspace.openTextDocument({ content: out, language: 'plaintext' });
+      await vscode.window.showTextDocument(doc, { preview: true });
     })
   );
 

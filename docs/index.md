@@ -37,8 +37,8 @@ description: Client NATS dentro VS Code — context CLI, publish/subscribe/reque
   </div>
   <div class="card">
     <div class="ico">🔑</div>
-    <h3>Key-Value browser</h3>
-    <p>Sfoglia i bucket KV e le loro chiavi nel tree; leggi un valore (con revisione) o scrivine uno nuovo.</p>
+    <h3>Key-Value & Object Store</h3>
+    <p>Sfoglia i bucket KV (chiavi/valori con revisione) e Object Store (oggetti); leggi, scrivi e carica file.</p>
   </div>
   <div class="card">
     <div class="ico">🟢</div>

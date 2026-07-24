@@ -46,6 +46,16 @@ export interface KvBucketSummary {
   bytes: number;
 }
 
+export interface OsBucketSummary {
+  bucket: string;
+  bytes: number;
+}
+
+export interface ObjectSummary {
+  name: string;
+  size: number;
+}
+
 export interface NewConsumer {
   durableName: string;
   ackPolicy?: 'explicit' | 'none' | 'all';
@@ -233,6 +243,28 @@ export class NatsClient {
     return created;
   }
 
+  /**
+   * Updates mutable fields of an existing durable consumer (NL-22). Returns the
+   * effective `maxDeliver` and `ackWaitMs` after the change.
+   */
+  async updateConsumer(
+    stream: string,
+    name: string,
+    changes: { maxDeliver?: number; ackWaitMs?: number }
+  ): Promise<{ maxDeliver: number; ackWaitMs: number }> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    const info = await jsm.consumers.info(stream, name);
+    const cfg = { ...info.config };
+    if (changes.maxDeliver !== undefined) cfg.max_deliver = changes.maxDeliver;
+    if (changes.ackWaitMs !== undefined) cfg.ack_wait = changes.ackWaitMs * 1_000_000; // ms → ns
+    const updated = await jsm.consumers.update(stream, name, cfg);
+    return {
+      maxDeliver: updated.config.max_deliver ?? -1,
+      ackWaitMs: (updated.config.ack_wait ?? 0) / 1_000_000,
+    };
+  }
+
   /** Deletes a consumer from a stream. Returns true on success. */
   async deleteConsumer(stream: string, name: string): Promise<boolean> {
     this.assertConnected();
@@ -297,6 +329,41 @@ export class NatsClient {
     this.assertConnected();
     const kv = await this.nc!.jetstream().views.kv(bucket);
     return kv.put(key, sc.encode(value));
+  }
+
+  /** Lists Object Store buckets (JetStream streams with the `OBJ_` prefix) — NL-23. */
+  async osBuckets(): Promise<OsBucketSummary[]> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    const out: OsBucketSummary[] = [];
+    for await (const si of jsm.streams.list()) {
+      if (!si.config.name.startsWith('OBJ_')) continue;
+      out.push({ bucket: si.config.name.slice(4), bytes: si.state.bytes });
+    }
+    return out.sort((a, b) => a.bucket.localeCompare(b.bucket));
+  }
+
+  /** Lists the objects in an Object Store bucket. */
+  async osList(bucket: string): Promise<ObjectSummary[]> {
+    this.assertConnected();
+    const os = await this.nc!.jetstream().views.os(bucket);
+    const infos = await os.list();
+    return infos.map((o) => ({ name: o.name, size: o.size })).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /** Reads an object's bytes, or null if absent. */
+  async osGet(bucket: string, name: string): Promise<Uint8Array | null> {
+    this.assertConnected();
+    const os = await this.nc!.jetstream().views.os(bucket);
+    return os.getBlob(name);
+  }
+
+  /** Writes an object and returns its name and stored size. Creates the bucket if missing. */
+  async osPut(bucket: string, name: string, data: Uint8Array): Promise<ObjectSummary> {
+    this.assertConnected();
+    const os = await this.nc!.jetstream().views.os(bucket);
+    const info = await os.putBlob({ name }, data);
+    return { name: info.name, size: info.size };
   }
 
   private assertConnected(): void {

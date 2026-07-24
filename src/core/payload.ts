@@ -79,6 +79,20 @@ export function previewPayload(
   };
 }
 
+/** Base64 encoding of a raw payload (inspector view, NL-21). */
+export function toBase64(data: Uint8Array): string {
+  let bin = '';
+  for (const b of data) bin += String.fromCharCode(b);
+  return typeof btoa === 'function' ? btoa(bin) : Buffer.from(data).toString('base64');
+}
+
+/** Lowercase hex encoding of a raw payload (inspector view, NL-21). */
+export function toHex(data: Uint8Array): string {
+  let out = '';
+  for (const b of data) out += b.toString(16).padStart(2, '0');
+  return out;
+}
+
 /** Validates a NATS subject (tokens separated by dots, * and > wildcards). */
 export function isValidSubject(subject: string, allowWildcards = true): boolean {
   if (!subject.length || /\s/.test(subject)) return false;
