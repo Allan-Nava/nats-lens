@@ -1,3 +1,14 @@
+## [1.5.0] — 2026-07-24
+
+### Aggiunto
+- **Persistenza e export/import subscriptions** (NL-8, NL-18): i subject sottoscritti sono salvati e ripristinati alla riconnessione; comandi **Export/Import Subscriptions** su file JSON. Core `serializeSubscriptions`/`parseSubscriptions`.
+- **Validazione JSON Schema** (NL-17): `validateJson()` (subset type/required/properties/items/enum, senza dipendenze) + comando **Validate JSON against Schema** sul documento attivo.
+- **Monitor `$SYS`** (NL-11): comando **Monitor $SYS Events** che sottoscrive `$SYS.>` in un canale dedicato.
+- **Connessione con token** (NL-19): comando **Connect with Token…** con token mascherato, tenuto solo in memoria (mai persistito né loggato).
+
+### Note
+- **Telemetria (NL-20)**: non implementata di proposito — richiede una decisione su privacy/consenso e un endpoint di raccolta.
+
 ## [1.4.0] — 2026-07-24
 
 ### Aggiunto
