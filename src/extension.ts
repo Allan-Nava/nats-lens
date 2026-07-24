@@ -5,6 +5,7 @@ import { NatsClient, StreamSummary } from './core/client';
 import { formatMessageLine, isValidSubject, renderPayload, subjectMatches } from './core/payload';
 import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
+import { validateJson, JsonSchema } from './core/schema';
 
 type Node =
   | { kind: 'context'; ctx: NatsContext }
@@ -549,6 +550,45 @@ export function activate(context: vscode.ExtensionContext): void {
       void vscode.window.showInformationMessage(
         `NATS: imported ${added} subscription(s)${errors.length ? `, ${errors.length} skipped` : ''}`
       );
+    }),
+
+    vscode.commands.registerCommand('natsLens.validateJson', async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        void vscode.window.showWarningMessage('NATS: open the JSON document to validate first');
+        return;
+      }
+      let value: unknown;
+      try {
+        value = JSON.parse(editor.document.getText());
+      } catch {
+        void vscode.window.showErrorMessage('NATS: the active document is not valid JSON');
+        return;
+      }
+      const picked = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        filters: { JSON: ['json'] },
+        openLabel: 'Pick JSON Schema',
+      });
+      if (!picked?.[0]) return;
+      let schema: JsonSchema;
+      try {
+        schema = JSON.parse(new TextDecoder().decode(await vscode.workspace.fs.readFile(picked[0]))) as JsonSchema;
+      } catch {
+        void vscode.window.showErrorMessage('NATS: the schema file is not valid JSON');
+        return;
+      }
+      const errors = validateJson(value, schema);
+      if (!errors.length) {
+        void vscode.window.showInformationMessage('NATS: ✓ payload is valid against the schema');
+        return;
+      }
+      const channel = vscode.window.createOutputChannel('NATS: schema validation');
+      channel.clear();
+      channel.appendLine(`${errors.length} validation error(s):`);
+      for (const e of errors) channel.appendLine(`  ${e.path}: ${e.message}`);
+      channel.show(true);
+      void vscode.window.showErrorMessage(`NATS: ${errors.length} schema validation error(s) — see output`);
     })
   );
 

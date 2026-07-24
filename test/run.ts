@@ -16,6 +16,7 @@ import {
 } from '../src/core/payload';
 import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
+import { validateJson, JsonSchema } from '../src/core/schema';
 import { NatsClient } from '../src/core/client';
 
 let failures = 0;
@@ -135,6 +136,22 @@ await test('subscriptions: parse validates subjects and reports errors (NL-18)',
   assert.strictEqual(bad.errors.length, 2);
 
   assert.ok(parseSubscriptions('not json').errors.length > 0);
+});
+
+await test('schema: validateJson checks type, required, enum, items (NL-17)', () => {
+  const schema: JsonSchema = {
+    type: 'object',
+    required: ['a'],
+    properties: { a: { type: 'string' }, n: { type: 'number' } },
+  };
+  assert.strictEqual(validateJson({ a: 'x', n: 1 }, schema).length, 0);
+  assert.ok(validateJson({ n: 1 }, schema).some((e) => e.path === '$.a' && /required/.test(e.message)));
+  assert.ok(validateJson({ a: 5 }, schema).some((e) => e.path === '$.a'));
+
+  assert.strictEqual(validateJson('z', { type: 'string', enum: ['x', 'y'] }).length, 1);
+  assert.strictEqual(validateJson([1, 'a'], { type: 'array', items: { type: 'number' } }).length, 1);
+  assert.strictEqual(validateJson(3, { type: 'integer' }).length, 0);
+  assert.strictEqual(validateJson(3.5, { type: 'integer' }).length, 1);
 });
 
 // --- integration: throwaway nats-server --------------------------------------

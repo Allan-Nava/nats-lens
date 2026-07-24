@@ -155,6 +155,7 @@ espandi un bucket per vederne le **chiavi**.
 | `NATS Lens: Set KV Value` | Scrive una chiave in un bucket KV |
 | `NATS Lens: Export Subscriptions` | Salva le subscription attive su file JSON |
 | `NATS Lens: Import Subscriptions` | Sottoscrive i subject da un file JSON |
+| `NATS Lens: Validate JSON against Schema` | Valida il documento JSON attivo contro uno schema |
 | `NATS Lens: Refresh` | Ricarica il tree |
 
 ## 7. Impostazioni

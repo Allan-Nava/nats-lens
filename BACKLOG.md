@@ -33,7 +33,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 - [ ] **NL-11 — Monitor `$SYS`**: eventi server (connessioni, ecc.) in un canale dedicato; richiede context con permessi di sistema.
 - [x] **NL-12 — Stream message replay**: `client.getStreamMessage()` per seq o last-by-subject; comando **Read Stream Message** dal menu dello stream, apertura come documento (JSON/testo).
 - [x] **NL-13 — JetStream consumer management**: `client.addConsumer()` (durable, ack/deliver policy, filter subject) + delete già presente (NL-9); comando **Create Consumer** dal menu dello stream. Modifica consumer: follow-up.
-- [ ] **NL-17 — Message inspector & schema validation**: visualizzatore avanzato con validazione JSON Schema e preview raw/base64.
+- [x] **NL-17 — Schema validation**: `validateJson()` (subset JSON Schema: type/required/properties/items/enum, dependency-free); comando **Validate JSON against Schema** sull'editor attivo. Preview raw/base64: follow-up.
 - [x] **NL-18 — Export/Import subscriptions**: core `serializeSubscriptions`/`parseSubscriptions` (JSON versionato, subject validati); comandi **Export/Import Subscriptions** su file.
 - [ ] **NL-19 — Credential helper UI**: usare `.creds`/token senza mostrare segreti, gestione sicura delle credenziali.
 - [ ] **NL-20 — Telemetria opt-in**: metriche d'uso anonime per performance/stabilità, toggle opt-in.
