@@ -40,6 +40,14 @@ export interface ConsumerSummary {
   ackPending: number;
 }
 
+export interface StoredMessage {
+  seq: number;
+  subject: string;
+  time: string;
+  data: Uint8Array;
+  headers?: [string, string[]][];
+}
+
 export type ConnState = 'connected' | 'reconnecting' | 'closed';
 
 export class NatsClient {
@@ -202,6 +210,28 @@ export class NatsClient {
     this.assertConnected();
     const jsm = await this.nc!.jetstreamManager();
     return jsm.consumers.delete(stream, name);
+  }
+
+  /**
+   * Fetches a stored message from a stream, either by sequence number or the
+   * last message on a given subject (NL-12). Throws if no such message exists.
+   */
+  async getStreamMessage(
+    stream: string,
+    selector: { seq: number } | { lastBySubject: string }
+  ): Promise<StoredMessage> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    const query = 'seq' in selector ? { seq: selector.seq } : { last_by_subj: selector.lastBySubject };
+    const m = await jsm.streams.getMessage(stream, query);
+    const hdrs = m.header ? [...m.header] : [];
+    return {
+      seq: m.seq,
+      subject: m.subject,
+      time: m.time.toISOString(),
+      data: m.data,
+      headers: hdrs.length ? hdrs : undefined,
+    };
   }
 
   private assertConnected(): void {

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
 import { NatsClient, StreamSummary } from './core/client';
-import { formatMessageLine, isValidSubject, subjectMatches } from './core/payload';
+import { formatMessageLine, isValidSubject, renderPayload, subjectMatches } from './core/payload';
 import { parseHeaders } from './core/headers';
 
 type Node =
@@ -325,7 +325,48 @@ export function activate(context: vscode.ExtensionContext): void {
           void vscode.window.showErrorMessage(`NATS delete consumer failed — ${err}`);
         }
       }
-    )
+    ),
+
+    vscode.commands.registerCommand('natsLens.readMessage', async (node?: { stream?: StreamSummary }) => {
+      const stream = node?.stream?.name;
+      if (!stream) return;
+      const mode = await vscode.window.showQuickPick(
+        [
+          { label: 'By sequence', detail: 'Fetch the message with a given stream sequence number', mode: 'seq' as const },
+          { label: 'Last by subject', detail: 'Fetch the most recent message on a subject', mode: 'subj' as const },
+        ],
+        { placeHolder: `Read a message from "${stream}"` }
+      );
+      if (!mode) return;
+
+      let selector: { seq: number } | { lastBySubject: string };
+      if (mode.mode === 'seq') {
+        const raw = await vscode.window.showInputBox({
+          prompt: `Stream sequence number in "${stream}"`,
+          validateInput: (v) => (/^\d+$/.test(v.trim()) && Number(v) > 0 ? undefined : 'positive integer'),
+        });
+        if (raw === undefined) return;
+        selector = { seq: Number(raw.trim()) };
+      } else {
+        const subject = await askSubject(`Subject in "${stream}" (last message wins)`, true);
+        if (!subject) return;
+        selector = { lastBySubject: subject };
+      }
+
+      try {
+        const msg = await client.getStreamMessage(stream, selector);
+        const { text, kind } = renderPayload(msg.data);
+        const hdr = msg.headers?.map(([k, v]) => `${k}=${v.join(',')}`).join(' ') ?? '';
+        const header = `// ${stream} · seq ${msg.seq} · ${msg.subject} · ${msg.time}${hdr ? ` · {${hdr}}` : ''}\n\n`;
+        const doc = await vscode.workspace.openTextDocument({
+          content: header + text,
+          language: kind === 'json' ? 'json' : 'plaintext',
+        });
+        await vscode.window.showTextDocument(doc, { preview: true });
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS: no message found — ${err}`);
+      }
+    })
   );
 
   context.subscriptions.push({

@@ -83,6 +83,11 @@
         "title": "NATS Lens: Stop a Subscription"
       },
       {
+        "command": "natsLens.readMessage",
+        "title": "NATS Lens: Read Stream Message",
+        "icon": "$(go-to-file)"
+      },
+      {
         "command": "natsLens.purgeStream",
         "title": "NATS Lens: Purge Stream",
         "icon": "$(trash)"
@@ -113,6 +118,11 @@
         {
           "command": "natsLens.unsubscribe",
           "when": "view == natsLens.explorer && viewItem == subscription"
+        },
+        {
+          "command": "natsLens.readMessage",
+          "when": "view == natsLens.explorer && viewItem == stream",
+          "group": "inline"
         },
         {
           "command": "natsLens.purgeStream",

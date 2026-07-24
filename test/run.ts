@@ -198,6 +198,19 @@ try {
     assert.strictEqual(consumers[0].pending, 1);
   });
 
+  await test('integration: read stream message by seq and last-by-subject (NL-12)', async () => {
+    client.publish('lens.js.event', 'e2'); // captured by LENS (lens.js.>) as seq 2
+    await new Promise((r) => setTimeout(r, 300));
+
+    const first = await client.getStreamMessage('LENS', { seq: 1 });
+    assert.strictEqual(first.subject, 'lens.js.event');
+    assert.strictEqual(new TextDecoder().decode(first.data), 'e1');
+
+    const last = await client.getStreamMessage('LENS', { lastBySubject: 'lens.js.event' });
+    assert.strictEqual(new TextDecoder().decode(last.data), 'e2');
+    assert.ok(last.seq > first.seq, 'last-by-subject must return the newer sequence');
+  });
+
   await test('integration: purge stream and delete consumer (NL-9)', async () => {
     const purged = await client.purgeStream('LENS');
     assert.ok(purged >= 1, 'expected at least one message purged');

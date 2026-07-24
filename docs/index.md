@@ -33,7 +33,7 @@ description: Client NATS dentro VS Code — context CLI, publish/subscribe/reque
   <div class="card">
     <div class="ico">🗄️</div>
     <h3>Browser JetStream</h3>
-    <p>Stream con messaggi, byte e subjects; consumer con pending e ack-pending. Purge stream e delete consumer con doppia conferma.</p>
+    <p>Stream con messaggi, byte e subjects; consumer con pending e ack-pending. Leggi messaggi per sequenza o ultimo-per-subject; purge stream e delete consumer con doppia conferma.</p>
   </div>
   <div class="card">
     <div class="ico">🟢</div>

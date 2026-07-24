@@ -97,6 +97,15 @@ Da connesso, espandi **JetStream** nel tree:
 - **Stream** → nome, `N msg · dimensione · subjects`.
 - Espandi uno stream → **consumer** con `pending` e `ack pending`.
 
+### Leggere i messaggi di uno stream
+Dal menu contestuale di uno stream (icona documento) o Command Palette → **NATS Lens: Read Stream Message**:
+
+- **By sequence** — recupera il messaggio con un dato numero di sequenza.
+- **Last by subject** — recupera l'ultimo messaggio su un subject (wildcard ammesse).
+
+Il messaggio si apre come documento con un'intestazione (`seq`, subject, timestamp, header)
+e il payload renderizzato (JSON indentato o testo).
+
 ### Operazioni distruttive (doppia conferma)
 Dal menu contestuale (icona cestino / tasto destro):
 
