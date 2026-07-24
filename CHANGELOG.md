@@ -1,3 +1,10 @@
+## [1.3.0] — 2026-07-24
+
+### Aggiunto
+- **Lettura messaggi stream** (NL-12): `client.getStreamMessage()` per numero di sequenza o ultimo-per-subject; comando **Read Stream Message** dal menu contestuale dello stream, con apertura del payload come documento (JSON/testo).
+- **Creazione consumer JetStream** (NL-13): `client.addConsumer()` per consumer durable con ack/deliver policy e filter subject opzionale; comando **Create Consumer** dal menu dello stream.
+- **Sito documentazione ridisegnato**: layout Jekyll custom (hero, feature card, dark mode) su GitHub Pages.
+
 ## [1.2.1] — 2026-07-23
 
 ### Corretto
