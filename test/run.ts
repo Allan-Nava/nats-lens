@@ -15,6 +15,7 @@ import {
   previewPayload,
 } from '../src/core/payload';
 import { parseHeaders } from '../src/core/headers';
+import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
 import { NatsClient } from '../src/core/client';
 
 let failures = 0;
@@ -115,6 +116,25 @@ await test('payload: message line bounds large payloads (NL-16)', () => {
   const line = formatMessageLine('big.subj', new TextEncoder().encode('y'.repeat(9000)), undefined, 100);
   assert.ok(line.includes('troncato'));
   assert.ok(line.length < 9000);
+});
+
+await test('subscriptions: serialize is versioned, sorted and deduped (NL-18)', () => {
+  const text = serializeSubscriptions(['b.>', 'a.*', 'b.>']);
+  const parsed = JSON.parse(text);
+  assert.strictEqual(parsed.version, 1);
+  assert.deepStrictEqual(parsed.subjects, ['a.*', 'b.>']);
+});
+
+await test('subscriptions: parse validates subjects and reports errors (NL-18)', () => {
+  const ok = parseSubscriptions('{"version":1,"subjects":["a.*","logs.>"]}');
+  assert.deepStrictEqual(ok.subjects, ['a.*', 'logs.>']);
+  assert.strictEqual(ok.errors.length, 0);
+
+  const bad = parseSubscriptions('{"version":1,"subjects":["ok.subj","bad subject","a.>.b"]}');
+  assert.deepStrictEqual(bad.subjects, ['ok.subj']);
+  assert.strictEqual(bad.errors.length, 2);
+
+  assert.ok(parseSubscriptions('not json').errors.length > 0);
 });
 
 // --- integration: throwaway nats-server --------------------------------------

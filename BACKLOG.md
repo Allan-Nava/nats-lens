@@ -24,7 +24,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 ## v0.2+ — Stabilità e UX
 
 - [x] **NL-7 — Riconnessione automatica**: `NatsClient` espone `connectionState` (`connected`/`reconnecting`/`closed`) via gli eventi di stato di nats.js; status bar e tree riflettono la caduta del server (spinner "reconnecting…").
-- [ ] **NL-8 — Persistenza subscriptions**: salvataggio delle sottoscrizioni attive tra sessioni e stato nel tree.
+- [x] **NL-8 — Persistenza subscriptions**: i subject sottoscritti sono salvati in `workspaceState` e ripristinati al connect successivo.
 - [x] **NL-9 — Operazioni JetStream con conferma**: purge stream e delete consumer (`client.purgeStream`/`deleteConsumer`), con doppia conferma modale (mai di default) dal menu contestuale del tree.
 
 ## v0.3+ — Advanced
@@ -34,6 +34,6 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 - [x] **NL-12 — Stream message replay**: `client.getStreamMessage()` per seq o last-by-subject; comando **Read Stream Message** dal menu dello stream, apertura come documento (JSON/testo).
 - [x] **NL-13 — JetStream consumer management**: `client.addConsumer()` (durable, ack/deliver policy, filter subject) + delete già presente (NL-9); comando **Create Consumer** dal menu dello stream. Modifica consumer: follow-up.
 - [ ] **NL-17 — Message inspector & schema validation**: visualizzatore avanzato con validazione JSON Schema e preview raw/base64.
-- [ ] **NL-18 — Export/Import subscriptions**: esporta le subscriptions attive su file e reimport per ripristino rapido.
+- [x] **NL-18 — Export/Import subscriptions**: core `serializeSubscriptions`/`parseSubscriptions` (JSON versionato, subject validati); comandi **Export/Import Subscriptions** su file.
 - [ ] **NL-19 — Credential helper UI**: usare `.creds`/token senza mostrare segreti, gestione sicura delle credenziali.
 - [ ] **NL-20 — Telemetria opt-in**: metriche d'uso anonime per performance/stabilità, toggle opt-in.

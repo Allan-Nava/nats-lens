@@ -110,6 +110,14 @@
         "command": "natsLens.kvSet",
         "title": "NATS Lens: Set KV Value",
         "icon": "$(edit)"
+      },
+      {
+        "command": "natsLens.exportSubs",
+        "title": "NATS Lens: Export Subscriptions"
+      },
+      {
+        "command": "natsLens.importSubs",
+        "title": "NATS Lens: Import Subscriptions"
       }
     ],
     "menus": {

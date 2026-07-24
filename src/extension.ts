@@ -4,6 +4,7 @@ import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
 import { NatsClient, StreamSummary } from './core/client';
 import { formatMessageLine, isValidSubject, renderPayload, subjectMatches } from './core/payload';
 import { parseHeaders } from './core/headers';
+import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
 
 type Node =
   | { kind: 'context'; ctx: NatsContext }
@@ -212,6 +213,21 @@ export function activate(context: vscode.ExtensionContext): void {
     tree.refresh();
   });
 
+  // NL-8/NL-18: subscription helpers shared by the subscribe command, session
+  // restore, and import.
+  const SUBS_KEY = 'natsLens.subs';
+  const persistSubs = () => void context.workspaceState.update(SUBS_KEY, [...subs.map.keys()]);
+  const subscribeTo = (subject: string, filter?: string): boolean => {
+    if (subs.map.has(subject)) return false;
+    const channel = vscode.window.createOutputChannel(`NATS: ${subject}`);
+    const sub = client.subscribe(subject, (subj, data, headers) => {
+      if (filter && !subjectMatches(filter, subj)) return;
+      channel.appendLine(formatMessageLine(subj, data, headers));
+    });
+    subs.map.set(subject, { sub, channel });
+    return true;
+  };
+
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('natsLens.explorer', tree),
     status,
@@ -240,6 +256,17 @@ export function activate(context: vscode.ExtensionContext): void {
         void vscode.window.showInformationMessage(
           `NATS: connected to ${ctx.name}${info ? ` (server ${info.server} v${info.version})` : ''}`
         );
+        // NL-8: restore subscriptions persisted from a previous session.
+        const saved = context.workspaceState.get<string[]>(SUBS_KEY, []);
+        let restored = 0;
+        for (const s of saved) {
+          try {
+            if (subscribeTo(s)) restored++;
+          } catch {
+            /* skip subjects that no longer subscribe cleanly */
+          }
+        }
+        if (restored) void vscode.window.setStatusBarMessage(`NATS: restored ${restored} subscription(s)`, 3000);
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS: connection to ${ctx.name} failed — ${err}`);
       }
@@ -310,13 +337,9 @@ export function activate(context: vscode.ExtensionContext): void {
       });
       if (filter === undefined) return;
       try {
-        const channel = vscode.window.createOutputChannel(`NATS: ${subject}`);
-        const sub = client.subscribe(subject, (subj, data, headers) => {
-          if (filter && !subjectMatches(filter, subj)) return;
-          channel.appendLine(formatMessageLine(subj, data, headers));
-        });
-        subs.map.set(subject, { sub, channel });
-        channel.show(true);
+        subscribeTo(subject, filter || undefined);
+        subs.map.get(subject)?.channel.show(true);
+        persistSubs();
         tree.refresh();
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS subscribe failed — ${err}`);
@@ -332,6 +355,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       if (subject) {
         subs.stop(subject);
+        persistSubs();
         tree.refresh();
       }
     }),
@@ -482,6 +506,49 @@ export function activate(context: vscode.ExtensionContext): void {
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS KV set failed — ${err}`);
       }
+    }),
+
+    vscode.commands.registerCommand('natsLens.exportSubs', async () => {
+      const subjects = [...subs.map.keys()];
+      if (!subjects.length) {
+        void vscode.window.showWarningMessage('NATS: no active subscriptions to export');
+        return;
+      }
+      const uri = await vscode.window.showSaveDialog({
+        filters: { JSON: ['json'] },
+        saveLabel: 'Export subscriptions',
+      });
+      if (!uri) return;
+      await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(serializeSubscriptions(subjects)));
+      void vscode.window.showInformationMessage(`NATS: exported ${subjects.length} subscription(s)`);
+    }),
+
+    vscode.commands.registerCommand('natsLens.importSubs', async () => {
+      if (client.connectionState !== 'connected') {
+        void vscode.window.showWarningMessage('NATS: connect to a context first');
+        return;
+      }
+      const picked = await vscode.window.showOpenDialog({
+        canSelectMany: false,
+        filters: { JSON: ['json'] },
+        openLabel: 'Import subscriptions',
+      });
+      if (!picked?.[0]) return;
+      const bytes = await vscode.workspace.fs.readFile(picked[0]);
+      const { subjects, errors } = parseSubscriptions(new TextDecoder().decode(bytes));
+      let added = 0;
+      for (const s of subjects) {
+        try {
+          if (subscribeTo(s)) added++;
+        } catch {
+          /* skip */
+        }
+      }
+      persistSubs();
+      tree.refresh();
+      void vscode.window.showInformationMessage(
+        `NATS: imported ${added} subscription(s)${errors.length ? `, ${errors.length} skipped` : ''}`
+      );
     })
   );
 

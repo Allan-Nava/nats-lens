@@ -83,6 +83,10 @@ Command Palette → **NATS Lens: Subscribe to Subject**.
 Le subscription attive compaiono sotto **Subscriptions** nel tree; fermane una con
 **NATS Lens: Stop a Subscription** o dal menu contestuale.
 
+I subject sottoscritti sono **persistiti tra sessioni** (workspace) e **ripristinati** alla
+riconnessione. Puoi anche **esportarli/importarli** su file JSON con
+**NATS Lens: Export/Import Subscriptions**.
+
 ### Request / Reply
 Command Palette → **NATS Lens: Send Request (request-reply)**.
 Inserisci subject e payload: la reply si apre come documento. Timeout di default 3s;
@@ -149,6 +153,8 @@ espandi un bucket per vederne le **chiavi**.
 | `NATS Lens: Delete Consumer` | Elimina un consumer (doppia conferma) |
 | `NATS Lens: Open KV Value` | Apre il valore di una chiave KV |
 | `NATS Lens: Set KV Value` | Scrive una chiave in un bucket KV |
+| `NATS Lens: Export Subscriptions` | Salva le subscription attive su file JSON |
+| `NATS Lens: Import Subscriptions` | Sottoscrive i subject da un file JSON |
 | `NATS Lens: Refresh` | Ricarica il tree |
 
 ## 7. Impostazioni
