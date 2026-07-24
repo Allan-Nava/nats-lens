@@ -1,3 +1,10 @@
+## [1.6.0] — 2026-07-24
+
+### Aggiunto
+- **Browser Object Store** (NL-23): sezione **Object Store** nel tree (bucket → oggetti); apertura del contenuto come documento e **Upload Object** da file. Core `osBuckets/osList/osGet/osPut`.
+- **Modifica consumer** (NL-22): comando **Modify Consumer** per aggiornare `max_deliver`/`ack_wait` di un consumer esistente. Core `updateConsumer`.
+- **Ispezione payload base64/hex** (NL-21): comando **Inspect Payload as base64/hex** sul documento attivo. Core `toBase64`/`toHex`.
+
 ## [1.5.0] — 2026-07-24
 
 ### Aggiunto
