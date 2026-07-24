@@ -88,6 +88,11 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "natsLens.addConsumer",
+        "title": "NATS Lens: Create Consumer",
+        "icon": "$(add)"
+      },
+      {
         "command": "natsLens.purgeStream",
         "title": "NATS Lens: Purge Stream",
         "icon": "$(trash)"
@@ -121,6 +126,11 @@
         },
         {
           "command": "natsLens.readMessage",
+          "when": "view == natsLens.explorer && viewItem == stream",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.addConsumer",
           "when": "view == natsLens.explorer && viewItem == stream",
           "group": "inline"
         },

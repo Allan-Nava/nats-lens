@@ -32,7 +32,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 - [ ] **NL-10 — KV / Object Store browser**: bucket KV come tree, get/put valori.
 - [ ] **NL-11 — Monitor `$SYS`**: eventi server (connessioni, ecc.) in un canale dedicato; richiede context con permessi di sistema.
 - [x] **NL-12 — Stream message replay**: `client.getStreamMessage()` per seq o last-by-subject; comando **Read Stream Message** dal menu dello stream, apertura come documento (JSON/testo).
-- [ ] **NL-13 — JetStream consumer management**: creare/modificare/eliminare consumer (pull/ephemeral/durable).
+- [x] **NL-13 — JetStream consumer management**: `client.addConsumer()` (durable, ack/deliver policy, filter subject) + delete già presente (NL-9); comando **Create Consumer** dal menu dello stream. Modifica consumer: follow-up.
 - [ ] **NL-17 — Message inspector & schema validation**: visualizzatore avanzato con validazione JSON Schema e preview raw/base64.
 - [ ] **NL-18 — Export/Import subscriptions**: esporta le subscriptions attive su file e reimport per ripristino rapido.
 - [ ] **NL-19 — Credential helper UI**: usare `.creds`/token senza mostrare segreti, gestione sicura delle credenziali.

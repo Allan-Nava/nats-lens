@@ -40,6 +40,13 @@ export interface ConsumerSummary {
   ackPending: number;
 }
 
+export interface NewConsumer {
+  durableName: string;
+  ackPolicy?: 'explicit' | 'none' | 'all';
+  deliverPolicy?: 'all' | 'new' | 'last';
+  filterSubject?: string;
+}
+
 export interface StoredMessage {
   seq: number;
   subject: string;
@@ -203,6 +210,21 @@ export class NatsClient {
     const jsm = await this.nc!.jetstreamManager();
     const res = await jsm.streams.purge(name);
     return res.purged;
+  }
+
+  /** Creates a durable consumer on a stream and returns its summary (NL-13). */
+  async addConsumer(stream: string, cfg: NewConsumer): Promise<ConsumerSummary> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    await jsm.consumers.add(stream, {
+      durable_name: cfg.durableName,
+      ack_policy: (cfg.ackPolicy ?? 'explicit') as never,
+      deliver_policy: (cfg.deliverPolicy ?? 'all') as never,
+      filter_subject: cfg.filterSubject,
+    });
+    const created = (await this.consumers(stream)).find((c) => c.name === cfg.durableName);
+    if (!created) throw new Error(`consumer ${cfg.durableName} was not created`);
+    return created;
   }
 
   /** Deletes a consumer from a stream. Returns true on success. */

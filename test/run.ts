@@ -222,6 +222,17 @@ try {
     assert.strictEqual((await client.consumers('LENS')).length, 0);
   });
 
+  await test('integration: create a durable consumer (NL-13)', async () => {
+    const created = await client.addConsumer('LENS', {
+      durableName: 'reader',
+      ackPolicy: 'explicit',
+      deliverPolicy: 'all',
+    });
+    assert.strictEqual(created.name, 'reader');
+    const names = (await client.consumers('LENS')).map((c) => c.name);
+    assert.ok(names.includes('reader'), 'new consumer must appear in the list');
+  });
+
   await test('integration: request gets an error without a responder', async () => {
     await assert.rejects(() => client.request('lens.nobody.home', 'ping', 500));
   });

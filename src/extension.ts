@@ -366,6 +366,37 @@ export function activate(context: vscode.ExtensionContext): void {
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS: no message found — ${err}`);
       }
+    }),
+
+    vscode.commands.registerCommand('natsLens.addConsumer', async (node?: { stream?: StreamSummary }) => {
+      const stream = node?.stream?.name;
+      if (!stream) return;
+      const durableName = await vscode.window.showInputBox({
+        prompt: `Durable consumer name on "${stream}"`,
+        validateInput: (v) => (/^[A-Za-z0-9_-]+$/.test(v.trim()) ? undefined : 'use letters, digits, _ or -'),
+      });
+      if (!durableName) return;
+      const ack = await vscode.window.showQuickPick(['explicit', 'all', 'none'], { placeHolder: 'Ack policy' });
+      if (!ack) return;
+      const deliver = await vscode.window.showQuickPick(['all', 'new', 'last'], { placeHolder: 'Deliver policy' });
+      if (!deliver) return;
+      const filter = await vscode.window.showInputBox({
+        prompt: 'Optional filter subject (wildcards allowed, empty = none)',
+        validateInput: (v) => (!v.trim() || isValidSubject(v.trim(), true) ? undefined : 'invalid NATS subject'),
+      });
+      if (filter === undefined) return;
+      try {
+        await client.addConsumer(stream, {
+          durableName: durableName.trim(),
+          ackPolicy: ack as 'explicit' | 'all' | 'none',
+          deliverPolicy: deliver as 'all' | 'new' | 'last',
+          filterSubject: filter.trim() || undefined,
+        });
+        void vscode.window.showInformationMessage(`NATS: created consumer ${durableName.trim()} on ${stream}`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS create consumer failed — ${err}`);
+      }
     })
   );
 

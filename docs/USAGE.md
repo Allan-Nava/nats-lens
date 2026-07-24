@@ -106,6 +106,11 @@ Dal menu contestuale di uno stream (icona documento) o Command Palette → **NAT
 Il messaggio si apre come documento con un'intestazione (`seq`, subject, timestamp, header)
 e il payload renderizzato (JSON indentato o testo).
 
+### Creare un consumer
+Dal menu contestuale di uno stream (icona `+`) o Command Palette → **NATS Lens: Create Consumer**:
+nome durable, **ack policy** (`explicit`/`all`/`none`), **deliver policy** (`all`/`new`/`last`)
+e un **filter subject** opzionale. Il consumer creato compare subito nel tree.
+
 ### Operazioni distruttive (doppia conferma)
 Dal menu contestuale (icona cestino / tasto destro):
 
@@ -127,6 +132,8 @@ il pulsante predefinito è Annulla. L'operazione non è reversibile.
 | `NATS Lens: Send Request (request-reply)` | Invia una request e apri la reply |
 | `NATS Lens: Subscribe to Subject` | Live-tail di un subject in un Output channel |
 | `NATS Lens: Stop a Subscription` | Ferma una subscription attiva |
+| `NATS Lens: Read Stream Message` | Legge un messaggio dello stream (seq / last-by-subject) |
+| `NATS Lens: Create Consumer` | Crea un consumer durable su uno stream |
 | `NATS Lens: Purge Stream` | Svuota uno stream (doppia conferma) |
 | `NATS Lens: Delete Consumer` | Elimina un consumer (doppia conferma) |
 | `NATS Lens: Refresh` | Ricarica il tree |
