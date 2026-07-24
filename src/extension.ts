@@ -589,6 +589,30 @@ export function activate(context: vscode.ExtensionContext): void {
       for (const e of errors) channel.appendLine(`  ${e.path}: ${e.message}`);
       channel.show(true);
       void vscode.window.showErrorMessage(`NATS: ${errors.length} schema validation error(s) — see output`);
+    }),
+
+    // NL-11: monitor server system events. Requires a context with system-account
+    // privileges; without them the subject simply yields nothing.
+    vscode.commands.registerCommand('natsLens.monitorSys', async () => {
+      if (client.connectionState !== 'connected') {
+        void vscode.window.showWarningMessage('NATS: connect to a context first');
+        return;
+      }
+      const subject = '$SYS.>';
+      if (subs.map.has(subject)) {
+        subs.map.get(subject)?.channel.show(true);
+        return;
+      }
+      try {
+        subscribeTo(subject);
+        subs.map.get(subject)?.channel.show(true);
+        tree.refresh();
+        void vscode.window.showInformationMessage(
+          'NATS: monitoring $SYS.> (requires system-account privileges)'
+        );
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS: cannot monitor $SYS — ${err}`);
+      }
     })
   );
 

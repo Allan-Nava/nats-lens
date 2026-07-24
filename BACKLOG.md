@@ -30,7 +30,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 ## v0.3+ — Advanced
 
 - [x] **NL-10 — KV browser**: `client.kvBuckets/kvKeys/kvGet/kvPut`; sezione Key-Value nel tree (bucket → chiavi), lettura valore come documento e comando **Set KV Value**. Object Store: follow-up.
-- [ ] **NL-11 — Monitor `$SYS`**: eventi server (connessioni, ecc.) in un canale dedicato; richiede context con permessi di sistema.
+- [x] **NL-11 — Monitor `$SYS`**: comando **Monitor $SYS Events** che sottoscrive `$SYS.>` in un canale dedicato (richiede context con permessi di sistema).
 - [x] **NL-12 — Stream message replay**: `client.getStreamMessage()` per seq o last-by-subject; comando **Read Stream Message** dal menu dello stream, apertura come documento (JSON/testo).
 - [x] **NL-13 — JetStream consumer management**: `client.addConsumer()` (durable, ack/deliver policy, filter subject) + delete già presente (NL-9); comando **Create Consumer** dal menu dello stream. Modifica consumer: follow-up.
 - [x] **NL-17 — Schema validation**: `validateJson()` (subset JSON Schema: type/required/properties/items/enum, dependency-free); comando **Validate JSON against Schema** sull'editor attivo. Preview raw/base64: follow-up.

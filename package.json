@@ -122,6 +122,10 @@
       {
         "command": "natsLens.validateJson",
         "title": "NATS Lens: Validate JSON against Schema"
+      },
+      {
+        "command": "natsLens.monitorSys",
+        "title": "NATS Lens: Monitor $SYS Events"
       }
     ],
     "menus": {

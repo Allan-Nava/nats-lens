@@ -156,6 +156,7 @@ espandi un bucket per vederne le **chiavi**.
 | `NATS Lens: Export Subscriptions` | Salva le subscription attive su file JSON |
 | `NATS Lens: Import Subscriptions` | Sottoscrive i subject da un file JSON |
 | `NATS Lens: Validate JSON against Schema` | Valida il documento JSON attivo contro uno schema |
+| `NATS Lens: Monitor $SYS Events` | Sottoscrive `$SYS.>` (richiede permessi di sistema) |
 | `NATS Lens: Refresh` | Ricarica il tree |
 
 ## 7. Impostazioni
