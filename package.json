@@ -59,6 +59,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "natsLens.openDashboard",
+        "title": "NATS Lens: Open Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
         "command": "natsLens.connect",
         "title": "NATS Lens: Connect to Context"
       },
@@ -153,9 +158,14 @@
     "menus": {
       "view/title": [
         {
+          "command": "natsLens.openDashboard",
+          "when": "view == natsLens.explorer",
+          "group": "navigation@1"
+        },
+        {
           "command": "natsLens.refresh",
           "when": "view == natsLens.explorer",
-          "group": "navigation"
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -228,8 +238,10 @@
     }
   },
   "scripts": {
-    "build": "node esbuild.mjs",
+    "build": "node esbuild.mjs && npm run build:css",
+    "build:css": "tailwindcss -i src/webview/index.css -o dist/webview.css --minify",
     "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.webview.json --noEmit",
     "test": "node esbuild.mjs --test && node .test/run.mjs",
     "package": "vsce package --no-dependencies",
     "vscode:prepublish": "npm run build",
@@ -240,9 +252,14 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.9.2",
     "esbuild": "^0.24.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5.5.0"
   }
 }

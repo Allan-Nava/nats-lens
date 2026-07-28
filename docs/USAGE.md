@@ -157,6 +157,7 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 
 | Comando | Cosa fa |
 |---|---|
+| `NATS Lens: Open Dashboard` | Apre la dashboard webview (stato + conteggi) |
 | `NATS Lens: Connect to Context` | Scegli un context e connettiti |
 | `NATS Lens: Connect with Token…` | Connessione ad-hoc con token mascherato (solo in memoria) |
 | `NATS Lens: Disconnect` | Disconnetti e chiudi le subscription |

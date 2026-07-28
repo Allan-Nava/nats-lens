@@ -54,7 +54,7 @@ l'extension host: gli asset webview sono bundle statici, non richieste a runtime
 shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con nonce).
 
 ### Fondamenta
-- [ ] **NL-24 — Webview scaffold**: target esbuild per la webview React, `WebviewPanel`/provider, CSP con nonce, bridge di messaggi extension↔webview tipizzato, theming VS Code. Il "view-model" (shaping dei dati per il dashboard) va nel **core puro** e testato (TDD), la resa React è glue.
+- [x] **NL-24 — Webview scaffold**: secondo target esbuild (`dist/webview.js`) React + Tailwind su variabili `--vscode-*` (`dist/webview.css`); comando **Open Dashboard** con `WebviewPanel`, CSP+nonce, bridge tipizzato (`InboundMessage`/`OutboundMessage`); view-model `buildDashboardModel` nel core (TDD). Dashboard iniziale con stato connessione + card conteggi.
 
 ### Pannelli dashboard
 - [ ] **NL-25 — Publish/Request panel**: form con subject (validazione), editor payload, header `k=v`, invio publish/request e reply inline.

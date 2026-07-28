@@ -19,6 +19,7 @@ import {
 import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
 import { validateJson, JsonSchema } from '../src/core/schema';
+import { buildDashboardModel } from '../src/core/dashboard';
 import { NatsClient } from '../src/core/client';
 
 let failures = 0;
@@ -161,6 +162,24 @@ await test('payload: base64 and hex inspector encodings (NL-21)', () => {
   assert.strictEqual(toHex(new Uint8Array([0, 255, 16])), '00ff10');
   assert.strictEqual(toHex(new Uint8Array([])), '');
   assert.strictEqual(toBase64(new Uint8Array([])), '');
+});
+
+await test('dashboard: view-model derives connected flag and totals (NL-24)', () => {
+  const live = buildDashboardModel({
+    connectionState: 'connected',
+    context: 'prod',
+    streams: 3,
+    kvBuckets: 2,
+    osBuckets: 1,
+    subscriptions: 4,
+  });
+  assert.strictEqual(live.connected, true);
+  assert.strictEqual(live.context, 'prod');
+  assert.deepStrictEqual(live.totals, { streams: 3, kvBuckets: 2, osBuckets: 1, subscriptions: 4 });
+
+  const down = buildDashboardModel({ connectionState: 'reconnecting', context: 'prod' });
+  assert.strictEqual(down.connected, false);
+  assert.deepStrictEqual(down.totals, { streams: 0, kvBuckets: 0, osBuckets: 0, subscriptions: 0 });
 });
 
 // --- integration: throwaway nats-server --------------------------------------

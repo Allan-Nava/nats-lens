@@ -9,6 +9,8 @@ out/**
 node_modules/**
 esbuild.mjs
 tsconfig.json
+tsconfig.webview.json
+tailwind.config.js
 **/*.map
 .gitignore
 .releaserc.json

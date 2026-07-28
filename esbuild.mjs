@@ -21,17 +21,29 @@ if (test) {
     banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" },
   });
 } else {
-  const ctx = await esbuild.context({
+  const extensionCtx = await esbuild.context({
     ...base,
     entryPoints: ['src/extension.ts'],
     outfile: 'dist/extension.js',
     external: ['vscode'],
     minify: !watch,
   });
+  // Webview bundle: runs in the browser context, React + JSX, no node.
+  const webviewCtx = await esbuild.context({
+    bundle: true,
+    platform: 'browser',
+    format: 'iife',
+    jsx: 'automatic',
+    sourcemap: true,
+    logLevel: 'info',
+    entryPoints: ['src/webview/main.tsx'],
+    outfile: 'dist/webview.js',
+    minify: !watch,
+  });
   if (watch) {
-    await ctx.watch();
+    await Promise.all([extensionCtx.watch(), webviewCtx.watch()]);
   } else {
-    await ctx.rebuild();
-    await ctx.dispose();
+    await Promise.all([extensionCtx.rebuild(), webviewCtx.rebuild()]);
+    await Promise.all([extensionCtx.dispose(), webviewCtx.dispose()]);
   }
 }

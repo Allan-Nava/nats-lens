@@ -16,12 +16,17 @@ title: Sviluppo e rilascio
 
 ```bash
 npm install                                    # dipendenze
-npm run build                                  # bundle esbuild → dist/extension.js
+npm run build                                  # esbuild (extension + webview) + Tailwind CSS
 npm run watch                                  # build in watch
 npm test                                       # unit + integrazione (nats-server locale, porta random)
-npx tsc --noEmit                               # typecheck (esbuild non typecheckka)
+npm run typecheck                              # tsc extension + tsc webview (JSX/DOM)
 npx @vscode/vsce package --no-dependencies     # .vsix locale
 ```
+
+La **dashboard webview** (React) vive in `src/webview/` ed è un secondo target esbuild
+(`dist/webview.js`) con CSS Tailwind mappato sulle variabili `--vscode-*` (`dist/webview.css`);
+il view-model puro è in `src/core/dashboard.ts` (testato). L'extension host resta con la sola
+dipendenza runtime `nats`: React/Tailwind sono devDependencies bundlate nell'asset statico.
 
 Premi **F5** in VS Code per aprire l'Extension Host e provare l'estensione.
 

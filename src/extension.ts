@@ -13,6 +13,7 @@ import {
 import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
 import { validateJson, JsonSchema } from './core/schema';
+import { buildDashboardModel, InboundMessage, OutboundMessage } from './core/dashboard';
 
 type Node =
   | { kind: 'context'; ctx: NatsContext }
@@ -222,6 +223,38 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
   }
 }
 
+function getNonce(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let s = '';
+  for (let i = 0; i < 32; i++) s += chars[Math.floor(Math.random() * chars.length)];
+  return s;
+}
+
+function dashboardHtml(webview: vscode.Webview, extUri: vscode.Uri): string {
+  const nonce = getNonce();
+  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extUri, 'dist', 'webview.js'));
+  const cssUri = webview.asWebviewUri(vscode.Uri.joinPath(extUri, 'dist', 'webview.css'));
+  const csp = [
+    `default-src 'none'`,
+    `style-src ${webview.cspSource} 'unsafe-inline'`,
+    `script-src 'nonce-${nonce}'`,
+    `font-src ${webview.cspSource}`,
+  ].join('; ');
+  return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="${csp}">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="${cssUri}" rel="stylesheet">
+</head>
+<body>
+  <div id="root"></div>
+  <script nonce="${nonce}" src="${scriptUri}"></script>
+</body>
+</html>`;
+}
+
 function prettyBytes(n: number): string {
   if (n < 1024) return `${n} B`;
   if (n < 1024 ** 2) return `${(n / 1024).toFixed(1)} KB`;
@@ -259,6 +292,7 @@ export function activate(context: vscode.ExtensionContext): void {
   client.onStatus(() => {
     updateStatus();
     tree.refresh();
+    void postModel();
   });
 
   // NL-8/NL-18: subscription helpers shared by the subscribe command, session
@@ -276,11 +310,70 @@ export function activate(context: vscode.ExtensionContext): void {
     return true;
   };
 
+  // NL-24: webview dashboard — single panel + typed message bridge.
+  let dashboardPanel: vscode.WebviewPanel | undefined;
+  const postModel = async () => {
+    if (!dashboardPanel) return;
+    let streams = 0;
+    let kvBuckets = 0;
+    let osBuckets = 0;
+    if (client.connectionState === 'connected') {
+      try {
+        streams = (await client.streams()).length;
+      } catch {
+        /* ignore */
+      }
+      try {
+        kvBuckets = (await client.kvBuckets()).length;
+      } catch {
+        /* ignore */
+      }
+      try {
+        osBuckets = (await client.osBuckets()).length;
+      } catch {
+        /* ignore */
+      }
+    }
+    const model = buildDashboardModel({
+      connectionState: client.connectionState,
+      context: client.context?.name ?? null,
+      streams,
+      kvBuckets,
+      osBuckets,
+      subscriptions: subs.map.size,
+    });
+    void dashboardPanel.webview.postMessage({ type: 'model', model } satisfies OutboundMessage);
+  };
+
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('natsLens.explorer', tree),
     status,
 
     vscode.commands.registerCommand('natsLens.refresh', () => tree.refresh()),
+
+    vscode.commands.registerCommand('natsLens.openDashboard', () => {
+      if (dashboardPanel) {
+        dashboardPanel.reveal();
+        return;
+      }
+      dashboardPanel = vscode.window.createWebviewPanel(
+        'natsLensDashboard',
+        'NATS Lens',
+        vscode.ViewColumn.Active,
+        {
+          enableScripts: true,
+          retainContextWhenHidden: true,
+          localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')],
+        }
+      );
+      dashboardPanel.webview.html = dashboardHtml(dashboardPanel.webview, context.extensionUri);
+      dashboardPanel.onDidDispose(() => {
+        dashboardPanel = undefined;
+      });
+      dashboardPanel.webview.onDidReceiveMessage((msg: InboundMessage) => {
+        if (msg.type === 'ready' || msg.type === 'refresh') void postModel();
+      });
+    }),
 
     vscode.commands.registerCommand('natsLens.connect', async (name?: string) => {
       const contexts = loadContexts(
