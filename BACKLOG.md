@@ -43,3 +43,27 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 - [x] **NL-21 — Payload inspector (base64/hex)**: core `toBase64`/`toHex`; comando **Inspect Payload as base64/hex** sull'editor attivo.
 - [x] **NL-22 — Modifica consumer**: `client.updateConsumer()` (`max_deliver`/`ack_wait`); comando **Modify Consumer** dal menu del consumer.
 - [x] **NL-23 — Object Store browser**: `client.osBuckets/osList/osGet/osPut` (via `putBlob`/`getBlob`); sezione **Object Store** nel tree (bucket → oggetti), apertura oggetto e **Upload Object** da file.
+
+## v1.7 — GUI: Webview dashboard + native polish
+
+Direzione scelta: **Webview dashboard React/shadcn** come centro operativo, affiancato dal
+polish della UI nativa. Nota architetturale: la webview introduce un **secondo target di build**
+(React → asset statici nel `.vsix`) e devDependencies (react/react-dom, tailwind o CSS con
+variabili tema VS Code). La regola "dipendenza **runtime** solo `nats`" resta valida per
+l'extension host: gli asset webview sono bundle statici, non richieste a runtime. I componenti
+shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con nonce).
+
+### Fondamenta
+- [ ] **NL-24 — Webview scaffold**: target esbuild per la webview React, `WebviewPanel`/provider, CSP con nonce, bridge di messaggi extension↔webview tipizzato, theming VS Code. Il "view-model" (shaping dei dati per il dashboard) va nel **core puro** e testato (TDD), la resa React è glue.
+
+### Pannelli dashboard
+- [ ] **NL-25 — Publish/Request panel**: form con subject (validazione), editor payload, header `k=v`, invio publish/request e reply inline.
+- [ ] **NL-26 — Subscribe live-tail panel**: tabella messaggi live con filtro subject, pausa/clear, evidenziazione JSON.
+- [ ] **NL-27 — Message inspector panel**: viste JSON tree / raw / base64 / hex + validazione JSON Schema (riusa `validateJson`, `toBase64`, `toHex`).
+- [ ] **NL-28 — Overview panel**: tabelle Streams / KV / Object Store con conteggi e azioni rapide.
+
+### Polish UI nativa
+- [ ] **NL-29 — Welcome / empty states**: `viewsWelcome` quando disconnesso/senza context, con pulsanti Connect / Connect with Token.
+- [ ] **NL-30 — Tooltip & badge ricchi**: `MarkdownString` su stream/consumer/bucket con dettagli; badge conteggi e colori di stato.
+- [ ] **NL-31 — Organizzazione & ordinamento**: ordinamento configurabile, memoria stato collapse, filtro/ricerca nel tree.
+- [ ] **NL-32 — Quick actions & status bar**: status bar cliccabile con QuickPick di azioni rapide; menu contestuali coerenti.
