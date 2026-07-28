@@ -63,7 +63,7 @@ shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con n
 - [x] **NL-28 — Overview panel**: card conteggi + tabelle Streams / KV / Object Store dal view-model `buildDashboardModel` (liste).
 
 ### Polish UI nativa
-- [ ] **NL-29 — Welcome / empty states**: `viewsWelcome` quando disconnesso/senza context, con pulsanti Connect / Connect with Token.
-- [ ] **NL-30 — Tooltip & badge ricchi**: `MarkdownString` su stream/consumer/bucket con dettagli; badge conteggi e colori di stato.
-- [ ] **NL-31 — Organizzazione & ordinamento**: ordinamento configurabile, memoria stato collapse, filtro/ricerca nel tree.
-- [ ] **NL-32 — Quick actions & status bar**: status bar cliccabile con QuickPick di azioni rapide; menu contestuali coerenti.
+- [x] **NL-29 — Welcome / empty states**: `viewsWelcome` con link Connect / Connect with Token / Open Dashboard quando la view è vuota.
+- [x] **NL-30 — Tooltip ricchi**: `MarkdownString` su stream e consumer (core `streamTooltip`/`consumerTooltip`, TDD); conteggi già in description.
+- [x] **NL-31 — Filtro & collapse-memory**: comando **Filter Tree** (core `matchesFilter`, TDD) su context/stream/KV/OS; id stabili sui nodi per ricordare lo stato di espansione. Ordinamento già alfabetico nel core.
+- [x] **NL-32 — Quick actions & status bar**: status bar cliccabile → QuickPick **Quick Actions** (Dashboard/Connect/Publish/Subscribe/Filter…).

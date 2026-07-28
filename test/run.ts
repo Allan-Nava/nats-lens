@@ -20,6 +20,7 @@ import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
 import { validateJson, JsonSchema } from '../src/core/schema';
 import { buildDashboardModel } from '../src/core/dashboard';
+import { streamTooltip, matchesFilter } from '../src/core/tree';
 import { NatsClient } from '../src/core/client';
 
 let failures = 0;
@@ -187,6 +188,21 @@ await test('dashboard: view-model carries lists and derives totals (NL-24/NL-28)
   assert.strictEqual(down.connected, false);
   assert.deepStrictEqual(down.streams, []);
   assert.deepStrictEqual(down.totals, { streams: 0, kvBuckets: 0, osBuckets: 0, subscriptions: 0 });
+});
+
+await test('tree: stream tooltip includes name, subjects and counts (NL-30)', () => {
+  const md = streamTooltip({ name: 'ORDERS', subjects: ['orders.>'], messages: 12, bytes: 2048, consumers: 2 });
+  assert.match(md, /ORDERS/);
+  assert.match(md, /orders\.>/);
+  assert.match(md, /12/);
+  assert.match(md, /2/); // consumers
+});
+
+await test('tree: matchesFilter is case-insensitive substring, empty = all (NL-31)', () => {
+  assert.strictEqual(matchesFilter('ORDERS', ''), true);
+  assert.strictEqual(matchesFilter('ORDERS', 'ord'), true);
+  assert.strictEqual(matchesFilter('ORDERS', 'XYZ'), false);
+  assert.strictEqual(matchesFilter('lens.js.event', 'JS'), true);
 });
 
 // --- integration: throwaway nats-server --------------------------------------

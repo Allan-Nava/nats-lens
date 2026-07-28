@@ -153,11 +153,22 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 
 ---
 
+## 5d. Dashboard & UI
+
+- **Dashboard** (comando **Open Dashboard**, o icona nella toolbar della view): pannello webview con tab
+  **Overview** (conteggi + tabelle Streams/KV/Object Store), **Publish** (publish/request), **Subscribe**
+  (live-tail con filtro) e **Inspect** (pretty JSON / base64 / hex + validazione JSON Schema). Eredita il tema di VS Code.
+- **Status bar** cliccabile → **Quick Actions** (menu rapido: Dashboard, Connect, Publish, Subscribe, Filter…).
+- **Filter Tree** (icona filtro nella toolbar): filtra context/stream/bucket per nome; lo stato di espansione dei nodi è ricordato.
+- Quando non c'è alcun context, la view mostra una **welcome** con i pulsanti per connetterti.
+
 ## 6. Comandi (riassunto)
 
 | Comando | Cosa fa |
 |---|---|
-| `NATS Lens: Open Dashboard` | Apre la dashboard webview (stato + conteggi) |
+| `NATS Lens: Open Dashboard` | Apre la dashboard webview (Overview/Publish/Subscribe/Inspect) |
+| `NATS Lens: Quick Actions` | Menu rapido di azioni (anche dalla status bar) |
+| `NATS Lens: Filter Tree` | Filtra i nodi del tree per nome |
 | `NATS Lens: Connect to Context` | Scegli un context e connettiti |
 | `NATS Lens: Connect with Token…` | Connessione ad-hoc con token mascherato (solo in memoria) |
 | `NATS Lens: Disconnect` | Disconnetti e chiudi le subscription |

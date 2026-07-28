@@ -52,6 +52,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "natsLens.explorer",
+        "contents": "Nessun context NATS da mostrare.\nI context si leggono da `~/.config/nats/context` (o dall'impostazione `natsLens.contextsDir`).\n\n[Connetti a un context](command:natsLens.connect)\n[Connetti con token](command:natsLens.connectWithToken)\n[Apri dashboard](command:natsLens.openDashboard)"
+      }
+    ],
     "commands": [
       {
         "command": "natsLens.refresh",
@@ -62,6 +68,15 @@
         "command": "natsLens.openDashboard",
         "title": "NATS Lens: Open Dashboard",
         "icon": "$(dashboard)"
+      },
+      {
+        "command": "natsLens.filter",
+        "title": "NATS Lens: Filter Tree",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "natsLens.quickActions",
+        "title": "NATS Lens: Quick Actions"
       },
       {
         "command": "natsLens.connect",
@@ -163,9 +178,14 @@
           "group": "navigation@1"
         },
         {
-          "command": "natsLens.refresh",
+          "command": "natsLens.filter",
           "when": "view == natsLens.explorer",
           "group": "navigation@2"
+        },
+        {
+          "command": "natsLens.refresh",
+          "when": "view == natsLens.explorer",
+          "group": "navigation@3"
         }
       ],
       "view/item/context": [

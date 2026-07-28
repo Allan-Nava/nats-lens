@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
-import { NatsClient, StreamSummary } from './core/client';
+import { NatsClient, StreamSummary, ConsumerSummary } from './core/client';
+import { streamTooltip, consumerTooltip, matchesFilter } from './core/tree';
 import {
   formatMessageLine,
   isValidSubject,
@@ -20,7 +21,7 @@ type Node =
   | { kind: 'context'; ctx: NatsContext }
   | { kind: 'streams-root' }
   | { kind: 'stream'; stream: StreamSummary }
-  | { kind: 'consumer'; label: string; stream?: string; name?: string }
+  | { kind: 'consumer'; label: string; stream?: string; name?: string; summary?: ConsumerSummary }
   | { kind: 'subs-root' }
   | { kind: 'subscription'; subject: string }
   | { kind: 'kv-root' }
@@ -49,6 +50,9 @@ class ActiveSubs {
 class NatsTree implements vscode.TreeDataProvider<Node> {
   private emitter = new vscode.EventEmitter<Node | undefined>();
   readonly onDidChangeTreeData = this.emitter.event;
+
+  /** NL-31: client-side name filter applied to top-level named nodes. */
+  filter = '';
 
   constructor(private client: NatsClient, private subs: ActiveSubs) {}
 
@@ -82,12 +86,15 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
         item.description = `${s.messages} msg · ${prettyBytes(s.bytes)} · ${s.subjects.join(', ')}`;
         item.iconPath = new vscode.ThemeIcon('layers');
         item.contextValue = 'stream';
+        item.id = `stream:${s.name}`;
+        item.tooltip = new vscode.MarkdownString(streamTooltip(s));
         return item;
       }
       case 'consumer': {
         const item = new vscode.TreeItem(node.label, vscode.TreeItemCollapsibleState.None);
         item.iconPath = new vscode.ThemeIcon('person');
         if (node.name) item.contextValue = 'consumer';
+        if (node.summary) item.tooltip = new vscode.MarkdownString(consumerTooltip(node.summary));
         return item;
       }
       case 'subs-root': {
@@ -149,7 +156,9 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
         vscode.workspace.getConfiguration('natsLens').get<string>('contextsDir') || undefined
       );
       const extra = vscode.workspace.getConfiguration('natsLens').get<string[]>('extraServers', []);
-      const nodes: Node[] = contexts.map((ctx) => ({ kind: 'context', ctx }));
+      const nodes: Node[] = contexts
+        .filter((ctx) => matchesFilter(ctx.name, this.filter))
+        .map((ctx) => ({ kind: 'context', ctx }));
       for (const url of extra) {
         nodes.push({
           kind: 'context',
@@ -167,7 +176,9 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
     if (node.kind === 'streams-root') {
       try {
         const streams = await this.client.streams();
-        return streams.map((stream) => ({ kind: 'stream' as const, stream }));
+        return streams
+          .filter((stream) => matchesFilter(stream.name, this.filter))
+          .map((stream) => ({ kind: 'stream' as const, stream }));
       } catch {
         return [{ kind: 'consumer', label: '(JetStream not available)' }];
       }
@@ -180,6 +191,7 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
           label: `${c.name} — pending ${c.pending}, ack pending ${c.ackPending}`,
           stream: node.stream.name,
           name: c.name,
+          summary: c,
         }));
       } catch {
         return [];
@@ -191,7 +203,9 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
     if (node.kind === 'kv-root') {
       try {
         const buckets = await this.client.kvBuckets();
-        return buckets.map((b) => ({ kind: 'kv-bucket' as const, bucket: b.bucket, values: b.values, bytes: b.bytes }));
+        return buckets
+          .filter((b) => matchesFilter(b.bucket, this.filter))
+          .map((b) => ({ kind: 'kv-bucket' as const, bucket: b.bucket, values: b.values, bytes: b.bytes }));
       } catch {
         return [];
       }
@@ -207,7 +221,9 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
     if (node.kind === 'os-root') {
       try {
         const buckets = await this.client.osBuckets();
-        return buckets.map((b) => ({ kind: 'os-bucket' as const, bucket: b.bucket, bytes: b.bytes }));
+        return buckets
+          .filter((b) => matchesFilter(b.bucket, this.filter))
+          .map((b) => ({ kind: 'os-bucket' as const, bucket: b.bucket, bytes: b.bytes }));
       } catch {
         return [];
       }
@@ -284,7 +300,7 @@ export function activate(context: vscode.ExtensionContext): void {
         status.text = '$(plug) NATS: off';
         status.tooltip = 'NATS Lens — not connected';
     }
-    status.command = 'natsLens.connect';
+    status.command = 'natsLens.quickActions';
     status.show();
   };
   updateStatus();
@@ -352,6 +368,32 @@ export function activate(context: vscode.ExtensionContext): void {
     status,
 
     vscode.commands.registerCommand('natsLens.refresh', () => tree.refresh()),
+
+    vscode.commands.registerCommand('natsLens.filter', async () => {
+      const value = await vscode.window.showInputBox({
+        prompt: 'Filter tree by name (empty = clear)',
+        value: tree.filter,
+      });
+      if (value === undefined) return;
+      tree.filter = value.trim();
+      tree.refresh();
+    }),
+
+    vscode.commands.registerCommand('natsLens.quickActions', async () => {
+      const connected = client.connectionState === 'connected';
+      const items: Array<vscode.QuickPickItem & { cmd: string }> = [
+        { label: '$(dashboard) Open Dashboard', cmd: 'natsLens.openDashboard' },
+        connected
+          ? { label: '$(debug-disconnect) Disconnect', cmd: 'natsLens.disconnect' }
+          : { label: '$(plug) Connect to Context', cmd: 'natsLens.connect' },
+        { label: '$(key) Connect with Token…', cmd: 'natsLens.connectWithToken' },
+        { label: '$(arrow-up) Publish', cmd: 'natsLens.publish' },
+        { label: '$(radio-tower) Subscribe', cmd: 'natsLens.subscribe' },
+        { label: '$(filter) Filter tree…', cmd: 'natsLens.filter' },
+      ];
+      const picked = await vscode.window.showQuickPick(items, { placeHolder: 'NATS Lens — quick actions' });
+      if (picked) void vscode.commands.executeCommand(picked.cmd);
+    }),
 
     vscode.commands.registerCommand('natsLens.openDashboard', () => {
       if (dashboardPanel) {
