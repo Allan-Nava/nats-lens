@@ -83,7 +83,11 @@ export function previewPayload(
 export function toBase64(data: Uint8Array): string {
   let bin = '';
   for (const b of data) bin += String.fromCharCode(b);
-  return typeof btoa === 'function' ? btoa(bin) : Buffer.from(data).toString('base64');
+  if (typeof btoa === 'function') return btoa(bin);
+  // Node fallback without referencing the Buffer type, so this pure module
+  // still typechecks under the DOM-only webview config.
+  const g = globalThis as { Buffer?: { from(s: string, enc: string): { toString(enc: string): string } } };
+  return g.Buffer ? g.Buffer.from(bin, 'binary').toString('base64') : bin;
 }
 
 /** Lowercase hex encoding of a raw payload (inspector view, NL-21). */

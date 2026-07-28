@@ -57,10 +57,10 @@ shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con n
 - [x] **NL-24 — Webview scaffold**: secondo target esbuild (`dist/webview.js`) React + Tailwind su variabili `--vscode-*` (`dist/webview.css`); comando **Open Dashboard** con `WebviewPanel`, CSP+nonce, bridge tipizzato (`InboundMessage`/`OutboundMessage`); view-model `buildDashboardModel` nel core (TDD). Dashboard iniziale con stato connessione + card conteggi.
 
 ### Pannelli dashboard
-- [ ] **NL-25 — Publish/Request panel**: form con subject (validazione), editor payload, header `k=v`, invio publish/request e reply inline.
-- [ ] **NL-26 — Subscribe live-tail panel**: tabella messaggi live con filtro subject, pausa/clear, evidenziazione JSON.
-- [ ] **NL-27 — Message inspector panel**: viste JSON tree / raw / base64 / hex + validazione JSON Schema (riusa `validateJson`, `toBase64`, `toHex`).
-- [ ] **NL-28 — Overview panel**: tabelle Streams / KV / Object Store con conteggi e azioni rapide.
+- [x] **NL-25 — Publish/Request panel**: tab con subject, payload, header `k=v`; invio publish/request via bridge e reply/ack inline.
+- [x] **NL-26 — Subscribe live-tail panel**: tab con subject + filtro, subscribe/unsubscribe, lista messaggi live (subscription della dashboard chiuse alla dispose del panel).
+- [x] **NL-27 — Message inspector panel**: tab con pretty JSON / base64 / hex + validazione JSON Schema, tutto client-side (riusa `validateJson`/`toBase64`/`toHex`/`renderPayload` bundlati).
+- [x] **NL-28 — Overview panel**: card conteggi + tabelle Streams / KV / Object Store dal view-model `buildDashboardModel` (liste).
 
 ### Polish UI nativa
 - [ ] **NL-29 — Welcome / empty states**: `viewsWelcome` quando disconnesso/senza context, con pulsanti Connect / Connect with Token.

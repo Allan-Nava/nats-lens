@@ -11,5 +11,5 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true
   },
-  "include": ["src/webview", "src/core/dashboard.ts"]
+  "include": ["src/webview", "src/core/dashboard.ts", "src/core/payload.ts", "src/core/schema.ts"]
 }

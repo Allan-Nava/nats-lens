@@ -7,13 +7,14 @@ import {
   isValidSubject,
   renderPayload,
   subjectMatches,
+  previewPayload,
   toBase64,
   toHex,
 } from './core/payload';
 import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
 import { validateJson, JsonSchema } from './core/schema';
-import { buildDashboardModel, InboundMessage, OutboundMessage } from './core/dashboard';
+import { buildDashboardModel, InboundMessage, OutboundMessage, StreamRow } from './core/dashboard';
 
 type Node =
   | { kind: 'context'; ctx: NatsContext }
@@ -312,24 +313,25 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // NL-24: webview dashboard — single panel + typed message bridge.
   let dashboardPanel: vscode.WebviewPanel | undefined;
+  const dashboardSubs = new Map<string, Subscription>(); // NL-26: live subs owned by the dashboard
   const postModel = async () => {
     if (!dashboardPanel) return;
-    let streams = 0;
-    let kvBuckets = 0;
-    let osBuckets = 0;
+    let streams: StreamRow[] = [];
+    let kvBuckets: string[] = [];
+    let osBuckets: string[] = [];
     if (client.connectionState === 'connected') {
       try {
-        streams = (await client.streams()).length;
+        streams = (await client.streams()).map((s) => ({ name: s.name, messages: s.messages }));
       } catch {
         /* ignore */
       }
       try {
-        kvBuckets = (await client.kvBuckets()).length;
+        kvBuckets = (await client.kvBuckets()).map((b) => b.bucket);
       } catch {
         /* ignore */
       }
       try {
-        osBuckets = (await client.osBuckets()).length;
+        osBuckets = (await client.osBuckets()).map((b) => b.bucket);
       } catch {
         /* ignore */
       }
@@ -368,10 +370,55 @@ export function activate(context: vscode.ExtensionContext): void {
       );
       dashboardPanel.webview.html = dashboardHtml(dashboardPanel.webview, context.extensionUri);
       dashboardPanel.onDidDispose(() => {
+        for (const sub of dashboardSubs.values()) sub.unsubscribe();
+        dashboardSubs.clear();
         dashboardPanel = undefined;
       });
-      dashboardPanel.webview.onDidReceiveMessage((msg: InboundMessage) => {
-        if (msg.type === 'ready' || msg.type === 'refresh') void postModel();
+      dashboardPanel.webview.onDidReceiveMessage(async (msg: InboundMessage) => {
+        const post = (m: OutboundMessage) => void dashboardPanel?.webview.postMessage(m);
+        try {
+          switch (msg.type) {
+            case 'ready':
+            case 'refresh':
+              await postModel();
+              post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+              break;
+            case 'publish': {
+              const { headers, errors } = parseHeaders(msg.headers ?? '');
+              if (errors.length) {
+                post({ type: 'error', message: `invalid headers — ${errors.join('; ')}` });
+                break;
+              }
+              client.publish(msg.subject, msg.payload, headers);
+              post({ type: 'reply', ok: true, text: `published to ${msg.subject}` });
+              break;
+            }
+            case 'request': {
+              const reply = await client.request(msg.subject, msg.payload);
+              post({ type: 'reply', ok: true, text: reply });
+              break;
+            }
+            case 'subscribe': {
+              if (dashboardSubs.has(msg.subject)) break;
+              const sub = client.subscribe(msg.subject, (subj, data) => {
+                if (msg.filter && !subjectMatches(msg.filter, subj)) return;
+                const { text } = previewPayload(data, 2000);
+                post({ type: 'message', message: { subject: subj, ts: new Date().toISOString(), body: text } });
+              });
+              dashboardSubs.set(msg.subject, sub);
+              post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+              break;
+            }
+            case 'unsubscribe': {
+              dashboardSubs.get(msg.subject)?.unsubscribe();
+              dashboardSubs.delete(msg.subject);
+              post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+              break;
+            }
+          }
+        } catch (err) {
+          post({ type: 'error', message: String(err) });
+        }
       });
     }),
 
