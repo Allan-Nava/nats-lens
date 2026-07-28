@@ -1,3 +1,15 @@
+## [1.7.0] — 2026-07-28
+
+### Aggiunto
+- **Dashboard webview** (React, tema VS Code — NL-24/25/26/27/28): comando **Open Dashboard** con tab **Overview** (conteggi + tabelle Streams/KV/Object Store), **Publish** (publish/request), **Subscribe** (live-tail con filtro) e **Inspect** (pretty JSON / base64 / hex + validazione JSON Schema, client-side). Bridge tipizzato extension↔webview; view-model `buildDashboardModel` nel core.
+- **Welcome / empty state** (NL-29): la view mostra i pulsanti Connect / Connect with Token / Open Dashboard quando è vuota.
+- **Tooltip ricchi** (NL-30): `MarkdownString` su stream e consumer con dettagli.
+- **Filtro tree & memoria espansione** (NL-31): comando **Filter Tree** su context/stream/KV/OS; stato di collapse ricordato.
+- **Quick Actions** (NL-32): status bar cliccabile con menu rapido di azioni.
+
+### Note
+- La webview introduce un secondo target di build (React + Tailwind mappato su `--vscode-*`). L'extension host mantiene la sola dipendenza runtime `nats`.
+
 ## [1.6.0] — 2026-07-24
 
 ### Aggiunto
