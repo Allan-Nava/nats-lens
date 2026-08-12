@@ -1,3 +1,11 @@
+## [1.8.0] — 2026-07-28
+
+### Aggiunto
+- **Lettura messaggio stream dal dashboard** (NL-33): tab Overview con form per leggere un messaggio (seq / last-by-subject); core `formatStoredMessage`.
+- **Ordinamento stream** (NL-34): per nome o numero messaggi — impostazione `natsLens.streamSort` + comando **Toggle Stream Sort**. Core `sortStreams`.
+- **Download su file** (NL-35): **Download Object** (Object Store) e **Download KV Value** dal menu contestuale.
+- **Persistenza tab dashboard** (NL-36): il tab attivo è ricordato tra riaperture.
+
 ## [1.7.0] — 2026-07-28
 
 ### Aggiunto
