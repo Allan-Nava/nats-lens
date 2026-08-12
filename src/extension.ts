@@ -2,13 +2,14 @@ import * as vscode from 'vscode';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
 import { NatsClient, StreamSummary, ConsumerSummary } from './core/client';
-import { streamTooltip, consumerTooltip, matchesFilter } from './core/tree';
+import { streamTooltip, consumerTooltip, matchesFilter, sortStreams, StreamSort } from './core/tree';
 import {
   formatMessageLine,
   isValidSubject,
   renderPayload,
   subjectMatches,
   previewPayload,
+  formatStoredMessage,
   toBase64,
   toHex,
 } from './core/payload';
@@ -176,7 +177,10 @@ class NatsTree implements vscode.TreeDataProvider<Node> {
     if (node.kind === 'streams-root') {
       try {
         const streams = await this.client.streams();
-        return streams
+        const sortBy = vscode.workspace
+          .getConfiguration('natsLens')
+          .get<StreamSort>('streamSort', 'name');
+        return sortStreams(streams, sortBy)
           .filter((stream) => matchesFilter(stream.name, this.filter))
           .map((stream) => ({ kind: 'stream' as const, stream }));
       } catch {
@@ -379,6 +383,14 @@ export function activate(context: vscode.ExtensionContext): void {
       tree.refresh();
     }),
 
+    vscode.commands.registerCommand('natsLens.toggleStreamSort', async () => {
+      const cfg = vscode.workspace.getConfiguration('natsLens');
+      const next: StreamSort = cfg.get<StreamSort>('streamSort', 'name') === 'name' ? 'messages' : 'name';
+      await cfg.update('streamSort', next, vscode.ConfigurationTarget.Global);
+      void vscode.window.setStatusBarMessage(`NATS: streams sorted by ${next}`, 2000);
+      tree.refresh();
+    }),
+
     vscode.commands.registerCommand('natsLens.quickActions', async () => {
       const connected = client.connectionState === 'connected';
       const items: Array<vscode.QuickPickItem & { cmd: string }> = [
@@ -455,6 +467,13 @@ export function activate(context: vscode.ExtensionContext): void {
               dashboardSubs.get(msg.subject)?.unsubscribe();
               dashboardSubs.delete(msg.subject);
               post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+              break;
+            }
+            case 'readMessage': {
+              const selector =
+                msg.seq !== undefined ? { seq: msg.seq } : { lastBySubject: msg.lastBySubject ?? '' };
+              const stored = await client.getStreamMessage(msg.stream, selector);
+              post({ type: 'messageDoc', ...formatStoredMessage(stored) });
               break;
             }
           }
@@ -945,6 +964,44 @@ export function activate(context: vscode.ExtensionContext): void {
         tree.refresh();
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS OS put failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.osDownload', async (node?: { bucket?: string; name?: string }) => {
+      const bucket = node?.bucket;
+      const name = node?.name;
+      if (!bucket || !name) return;
+      try {
+        const data = await client.osGet(bucket, name);
+        if (!data) {
+          void vscode.window.showWarningMessage(`NATS OS: ${bucket}/${name} not found`);
+          return;
+        }
+        const uri = await vscode.window.showSaveDialog({ saveLabel: 'Download object', defaultUri: vscode.Uri.file(name) });
+        if (!uri) return;
+        await vscode.workspace.fs.writeFile(uri, data);
+        void vscode.window.showInformationMessage(`NATS OS: downloaded ${name}`);
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS OS download failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.kvDownload', async (node?: { bucket?: string; key?: string }) => {
+      const bucket = node?.bucket;
+      const key = node?.key;
+      if (!bucket || !key) return;
+      try {
+        const entry = await client.kvGet(bucket, key);
+        if (!entry) {
+          void vscode.window.showWarningMessage(`NATS KV: ${bucket}/${key} not found`);
+          return;
+        }
+        const uri = await vscode.window.showSaveDialog({ saveLabel: 'Download value', defaultUri: vscode.Uri.file(key) });
+        if (!uri) return;
+        await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(entry.value));
+        void vscode.window.showInformationMessage(`NATS KV: downloaded ${bucket}/${key}`);
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS KV download failed — ${err}`);
       }
     }),
 

@@ -79,6 +79,11 @@
         "title": "NATS Lens: Quick Actions"
       },
       {
+        "command": "natsLens.toggleStreamSort",
+        "title": "NATS Lens: Toggle Stream Sort (name / messages)",
+        "icon": "$(sort-precedence)"
+      },
+      {
         "command": "natsLens.connect",
         "title": "NATS Lens: Connect to Context"
       },
@@ -168,6 +173,16 @@
         "command": "natsLens.osPut",
         "title": "NATS Lens: Upload Object",
         "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "natsLens.osDownload",
+        "title": "NATS Lens: Download Object",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "natsLens.kvDownload",
+        "title": "NATS Lens: Download KV Value",
+        "icon": "$(cloud-download)"
       }
     ],
     "menus": {
@@ -235,6 +250,16 @@
           "command": "natsLens.osPut",
           "when": "view == natsLens.explorer && viewItem == os-bucket",
           "group": "inline"
+        },
+        {
+          "command": "natsLens.osDownload",
+          "when": "view == natsLens.explorer && viewItem == os-object",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.kvDownload",
+          "when": "view == natsLens.explorer && viewItem == kv-key",
+          "group": "inline"
         }
       ]
     },
@@ -253,6 +278,12 @@
           },
           "default": [],
           "description": "Extra server URLs (nats://host:4222) shown alongside CLI contexts."
+        },
+        "natsLens.streamSort": {
+          "type": "string",
+          "enum": ["name", "messages"],
+          "default": "name",
+          "description": "Sort JetStream streams in the tree by name (A→Z) or message count (high→low)."
         }
       }
     }

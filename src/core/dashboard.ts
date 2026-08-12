@@ -62,7 +62,8 @@ export type InboundMessage =
   | { type: 'publish'; subject: string; payload: string; headers?: string }
   | { type: 'request'; subject: string; payload: string }
   | { type: 'subscribe'; subject: string; filter?: string }
-  | { type: 'unsubscribe'; subject: string };
+  | { type: 'unsubscribe'; subject: string }
+  | { type: 'readMessage'; stream: string; seq?: number; lastBySubject?: string };
 
 /** A live message forwarded to the webview's Subscribe tab. */
 export interface LiveMessage {
@@ -77,4 +78,5 @@ export type OutboundMessage =
   | { type: 'subscriptions'; subjects: string[] }
   | { type: 'message'; message: LiveMessage }
   | { type: 'reply'; ok: boolean; text: string }
+  | { type: 'messageDoc'; title: string; body: string }
   | { type: 'error'; message: string };

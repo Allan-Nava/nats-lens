@@ -79,6 +79,19 @@ export function previewPayload(
   };
 }
 
+/** Builds a title + rendered body for a stored JetStream message (NL-33). */
+export function formatStoredMessage(msg: {
+  subject: string;
+  seq: number;
+  time: string;
+  data: Uint8Array;
+  headers?: [string, string[]][];
+}): { title: string; body: string } {
+  const hdr = msg.headers?.map(([k, v]) => `${k}=${v.join(',')}`).join(' ') ?? '';
+  const title = `${msg.subject} · seq ${msg.seq} · ${msg.time}${hdr ? ` · {${hdr}}` : ''}`;
+  return { title, body: renderPayload(msg.data).text };
+}
+
 /** Base64 encoding of a raw payload (inspector view, NL-21). */
 export function toBase64(data: Uint8Array): string {
   let bin = '';

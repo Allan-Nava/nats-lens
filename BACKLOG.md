@@ -67,3 +67,10 @@ shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con n
 - [x] **NL-30 — Tooltip ricchi**: `MarkdownString` su stream e consumer (core `streamTooltip`/`consumerTooltip`, TDD); conteggi già in description.
 - [x] **NL-31 — Filtro & collapse-memory**: comando **Filter Tree** (core `matchesFilter`, TDD) su context/stream/KV/OS; id stabili sui nodi per ricordare lo stato di espansione. Ordinamento già alfabetico nel core.
 - [x] **NL-32 — Quick actions & status bar**: status bar cliccabile → QuickPick **Quick Actions** (Dashboard/Connect/Publish/Subscribe/Filter…).
+
+## v1.8 — Dashboard depth & UX
+
+- [x] **NL-33 — Read stream message dal dashboard**: form Overview (stream + seq/last-by-subject) via bridge (`readMessage`/`messageDoc`); core `formatStoredMessage` (titolo + payload renderizzato).
+- [x] **NL-34 — Ordinamento stream nel tree**: core `sortStreams(rows, by)` (nome / messaggi), impostazione `natsLens.streamSort` + comando **Toggle Stream Sort**.
+- [x] **NL-35 — Download su file**: comandi **Download Object** (os-object) e **Download KV Value** (kv-key) dal menu contestuale.
+- [x] **NL-36 — Persistenza stato dashboard**: il tab attivo è ricordato via `getState/setState` della webview.

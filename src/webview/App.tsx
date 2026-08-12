@@ -17,16 +17,28 @@ export function App({
   reply,
   messages,
   subscriptions,
+  messageDoc,
   error,
+  initialTab,
+  onTabChange,
 }: {
   model: DashboardModel | null;
   send: Send;
   reply: string | null;
   messages: LiveMessage[];
   subscriptions: string[];
+  messageDoc: { title: string; body: string } | null;
   error: string | null;
+  initialTab?: string;
+  onTabChange?: (tab: string) => void;
 }) {
-  const [tab, setTab] = React.useState<Tab>('Overview');
+  const [tab, setTab] = React.useState<Tab>(
+    (TABS as readonly string[]).includes(initialTab ?? '') ? (initialTab as Tab) : 'Overview'
+  );
+  const selectTab = (t: Tab) => {
+    setTab(t);
+    onTabChange?.(t);
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -42,7 +54,7 @@ export function App({
           {TABS.map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => selectTab(t)}
               className={`rounded px-3 py-1 ${
                 tab === t ? 'bg-accent text-accent-fg' : 'text-muted hover:text-fg'
               }`}
@@ -66,7 +78,7 @@ export function App({
             </CardValue>
           </Card>
         ) : tab === 'Overview' ? (
-          <OverviewTab model={model} />
+          <OverviewTab model={model} send={send} messageDoc={messageDoc} />
         ) : tab === 'Publish' ? (
           <PublishTab send={send} reply={reply} />
         ) : tab === 'Subscribe' ? (

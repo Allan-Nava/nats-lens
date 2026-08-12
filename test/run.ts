@@ -15,12 +15,13 @@ import {
   previewPayload,
   toBase64,
   toHex,
+  formatStoredMessage,
 } from '../src/core/payload';
 import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
 import { validateJson, JsonSchema } from '../src/core/schema';
 import { buildDashboardModel } from '../src/core/dashboard';
-import { streamTooltip, matchesFilter } from '../src/core/tree';
+import { streamTooltip, matchesFilter, sortStreams } from '../src/core/tree';
 import { NatsClient } from '../src/core/client';
 
 let failures = 0;
@@ -165,6 +166,18 @@ await test('payload: base64 and hex inspector encodings (NL-21)', () => {
   assert.strictEqual(toBase64(new Uint8Array([])), '');
 });
 
+await test('payload: formatStoredMessage builds title and rendered body (NL-33)', () => {
+  const r = formatStoredMessage({
+    subject: 'orders.new',
+    seq: 7,
+    time: '2026-07-28T10:00:00.000Z',
+    data: new TextEncoder().encode('{"id":1}'),
+  });
+  assert.match(r.title, /orders\.new/);
+  assert.match(r.title, /seq 7/);
+  assert.match(r.body, /"id": 1/);
+});
+
 await test('dashboard: view-model carries lists and derives totals (NL-24/NL-28)', () => {
   const live = buildDashboardModel({
     connectionState: 'connected',
@@ -203,6 +216,18 @@ await test('tree: matchesFilter is case-insensitive substring, empty = all (NL-3
   assert.strictEqual(matchesFilter('ORDERS', 'ord'), true);
   assert.strictEqual(matchesFilter('ORDERS', 'XYZ'), false);
   assert.strictEqual(matchesFilter('lens.js.event', 'JS'), true);
+});
+
+await test('tree: sortStreams by name (asc) or messages (desc) — NL-34', () => {
+  const rows = [
+    { name: 'B', messages: 1 },
+    { name: 'A', messages: 5 },
+    { name: 'C', messages: 3 },
+  ];
+  assert.deepStrictEqual(sortStreams(rows, 'name').map((r) => r.name), ['A', 'B', 'C']);
+  assert.deepStrictEqual(sortStreams(rows, 'messages').map((r) => r.name), ['A', 'C', 'B']);
+  // input not mutated
+  assert.strictEqual(rows[0].name, 'B');
 });
 
 // --- integration: throwaway nats-server --------------------------------------

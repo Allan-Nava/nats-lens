@@ -156,8 +156,11 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 ## 5d. Dashboard & UI
 
 - **Dashboard** (comando **Open Dashboard**, o icona nella toolbar della view): pannello webview con tab
-  **Overview** (conteggi + tabelle Streams/KV/Object Store), **Publish** (publish/request), **Subscribe**
-  (live-tail con filtro) e **Inspect** (pretty JSON / base64 / hex + validazione JSON Schema). Eredita il tema di VS Code.
+  **Overview** (conteggi + tabelle Streams/KV/Object Store + **lettura messaggio** di uno stream per seq/last-by-subject),
+  **Publish** (publish/request), **Subscribe** (live-tail con filtro) e **Inspect** (pretty JSON / base64 / hex +
+  validazione JSON Schema). Eredita il tema di VS Code e **ricorda il tab attivo**.
+- **Ordinamento stream**: impostazione `natsLens.streamSort` (nome / messaggi) o comando **Toggle Stream Sort**.
+- **Download**: dal menu di un oggetto Object Store o di una chiave KV, **Download Object** / **Download KV Value** salva su file.
 - **Status bar** cliccabile → **Quick Actions** (menu rapido: Dashboard, Connect, Publish, Subscribe, Filter…).
 - **Filter Tree** (icona filtro nella toolbar): filtra context/stream/bucket per nome; lo stato di espansione dei nodi è ricordato.
 - Quando non c'è alcun context, la view mostra una **welcome** con i pulsanti per connetterti.
@@ -185,6 +188,9 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 | `NATS Lens: Set KV Value` | Scrive una chiave in un bucket KV |
 | `NATS Lens: Open Object` | Apre il contenuto di un oggetto Object Store |
 | `NATS Lens: Upload Object` | Carica un file in un bucket Object Store |
+| `NATS Lens: Download Object` | Salva su file un oggetto Object Store |
+| `NATS Lens: Download KV Value` | Salva su file un valore KV |
+| `NATS Lens: Toggle Stream Sort (name / messages)` | Cambia l'ordinamento degli stream |
 | `NATS Lens: Inspect Payload as base64/hex` | Codifica il documento attivo in base64/hex |
 | `NATS Lens: Export Subscriptions` | Salva le subscription attive su file JSON |
 | `NATS Lens: Import Subscriptions` | Sottoscrive i subject da un file JSON |

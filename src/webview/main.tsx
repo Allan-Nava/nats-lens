@@ -5,6 +5,8 @@ import type { DashboardModel, InboundMessage, LiveMessage, OutboundMessage } fro
 
 interface VsCodeApi {
   postMessage(msg: InboundMessage): void;
+  getState(): { tab?: string } | undefined;
+  setState(state: { tab?: string }): void;
 }
 declare function acquireVsCodeApi(): VsCodeApi;
 
@@ -16,6 +18,7 @@ function Root() {
   const [reply, setReply] = React.useState<string | null>(null);
   const [messages, setMessages] = React.useState<LiveMessage[]>([]);
   const [subscriptions, setSubscriptions] = React.useState<string[]>([]);
+  const [messageDoc, setMessageDoc] = React.useState<{ title: string; body: string } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -35,6 +38,10 @@ function Root() {
           setReply(msg.text);
           setError(null);
           break;
+        case 'messageDoc':
+          setMessageDoc({ title: msg.title, body: msg.body });
+          setError(null);
+          break;
         case 'error':
           setError(msg.message);
           break;
@@ -52,7 +59,10 @@ function Root() {
       reply={reply}
       messages={messages}
       subscriptions={subscriptions}
+      messageDoc={messageDoc}
       error={error}
+      initialTab={vscode.getState()?.tab}
+      onTabChange={(tab) => vscode.setState({ tab })}
     />
   );
 }
