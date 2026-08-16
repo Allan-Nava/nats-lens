@@ -53,6 +53,30 @@ export function buildDashboardModel(input: DashboardInput): DashboardModel {
   };
 }
 
+/** Renders the dashboard model as a Markdown report (NL-37). */
+export function overviewMarkdown(model: DashboardModel): string {
+  const lines: string[] = [
+    '# NATS Lens — Overview',
+    '',
+    `- Connection: ${model.connected ? 'connected' : 'not connected'}`,
+    `- Context: ${model.context ?? '—'}`,
+    `- Streams: ${model.totals.streams} · KV: ${model.totals.kvBuckets} · Object Store: ${model.totals.osBuckets} · Subscriptions: ${model.totals.subscriptions}`,
+    '',
+  ];
+  if (model.streams.length) {
+    lines.push('## Streams', '', '| Stream | Messages |', '| --- | ---: |');
+    for (const s of model.streams) lines.push(`| ${s.name} | ${s.messages} |`);
+    lines.push('');
+  }
+  if (model.kvBuckets.length) {
+    lines.push('## KV buckets', '', ...model.kvBuckets.map((b) => `- ${b}`), '');
+  }
+  if (model.osBuckets.length) {
+    lines.push('## Object Store', '', ...model.osBuckets.map((b) => `- ${b}`), '');
+  }
+  return lines.join('\n');
+}
+
 // --- Typed message bridge: extension host <-> webview -----------------------
 
 /** Messages the webview sends to the extension host. */
@@ -79,4 +103,6 @@ export type OutboundMessage =
   | { type: 'message'; message: LiveMessage }
   | { type: 'reply'; ok: boolean; text: string }
   | { type: 'messageDoc'; title: string; body: string }
+  | { type: 'serverInfo'; server: string; version: string; rttMs: number }
+  | { type: 'focus'; tab: string; stream?: string }
   | { type: 'error'; message: string };

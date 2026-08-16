@@ -161,6 +161,9 @@ attivo in base64 o esadecimale (utile per contenuti binari).
   validazione JSON Schema). Eredita il tema di VS Code e **ricorda il tab attivo**.
 - **Ordinamento stream**: impostazione `natsLens.streamSort` (nome / messaggi) o comando **Toggle Stream Sort**.
 - **Download**: dal menu di un oggetto Object Store o di una chiave KV, **Download Object** / **Download KV Value** salva su file.
+- **Server info**: l'header della dashboard mostra server name/versione e round-trip time.
+- **Open Stream in Dashboard**: dal menu di uno stream apri la dashboard con la lettura messaggi già puntata su quello stream.
+- **Export Overview**: genera un report Markdown dello stato (Streams/KV/Object Store) come documento.
 - **Status bar** cliccabile → **Quick Actions** (menu rapido: Dashboard, Connect, Publish, Subscribe, Filter…).
 - **Filter Tree** (icona filtro nella toolbar): filtra context/stream/bucket per nome; lo stato di espansione dei nodi è ricordato.
 - Quando non c'è alcun context, la view mostra una **welcome** con i pulsanti per connetterti.
@@ -191,6 +194,8 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 | `NATS Lens: Download Object` | Salva su file un oggetto Object Store |
 | `NATS Lens: Download KV Value` | Salva su file un valore KV |
 | `NATS Lens: Toggle Stream Sort (name / messages)` | Cambia l'ordinamento degli stream |
+| `NATS Lens: Open Stream in Dashboard` | Apre la dashboard puntata su uno stream |
+| `NATS Lens: Export Overview` | Report Markdown dello stato come documento |
 | `NATS Lens: Inspect Payload as base64/hex` | Codifica il documento attivo in base64/hex |
 | `NATS Lens: Export Subscriptions` | Salva le subscription attive su file JSON |
 | `NATS Lens: Import Subscriptions` | Sottoscrive i subject da un file JSON |

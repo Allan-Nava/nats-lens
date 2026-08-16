@@ -19,6 +19,8 @@ function Root() {
   const [messages, setMessages] = React.useState<LiveMessage[]>([]);
   const [subscriptions, setSubscriptions] = React.useState<string[]>([]);
   const [messageDoc, setMessageDoc] = React.useState<{ title: string; body: string } | null>(null);
+  const [serverInfo, setServerInfo] = React.useState<{ server: string; version: string; rttMs: number } | null>(null);
+  const [focus, setFocus] = React.useState<{ tab: string; stream?: string } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -42,6 +44,12 @@ function Root() {
           setMessageDoc({ title: msg.title, body: msg.body });
           setError(null);
           break;
+        case 'serverInfo':
+          setServerInfo({ server: msg.server, version: msg.version, rttMs: msg.rttMs });
+          break;
+        case 'focus':
+          setFocus({ tab: msg.tab, stream: msg.stream });
+          break;
         case 'error':
           setError(msg.message);
           break;
@@ -60,6 +68,8 @@ function Root() {
       messages={messages}
       subscriptions={subscriptions}
       messageDoc={messageDoc}
+      serverInfo={serverInfo}
+      focus={focus}
       error={error}
       initialTab={vscode.getState()?.tab}
       onTabChange={(tab) => vscode.setState({ tab })}

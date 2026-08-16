@@ -16,7 +16,7 @@ import {
 import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
 import { validateJson, JsonSchema } from './core/schema';
-import { buildDashboardModel, InboundMessage, OutboundMessage, StreamRow } from './core/dashboard';
+import { buildDashboardModel, overviewMarkdown, InboundMessage, OutboundMessage, StreamRow } from './core/dashboard';
 
 type Node =
   | { kind: 'context'; ctx: NatsContext }
@@ -314,6 +314,7 @@ export function activate(context: vscode.ExtensionContext): void {
     updateStatus();
     tree.refresh();
     void postModel();
+    void postServerInfo();
   });
 
   // NL-8/NL-18: subscription helpers shared by the subscribe command, session
@@ -367,6 +368,107 @@ export function activate(context: vscode.ExtensionContext): void {
     void dashboardPanel.webview.postMessage({ type: 'model', model } satisfies OutboundMessage);
   };
 
+  // NL-38: server name/version + round-trip time.
+  const postServerInfo = async () => {
+    if (!dashboardPanel || client.connectionState !== 'connected') return;
+    const info = client.serverInfo();
+    if (!info) return;
+    let rttMs = 0;
+    try {
+      rttMs = await client.rtt();
+    } catch {
+      /* ignore */
+    }
+    void dashboardPanel.webview.postMessage({
+      type: 'serverInfo',
+      server: info.server,
+      version: info.version,
+      rttMs,
+    } satisfies OutboundMessage);
+  };
+
+  // NL-39: a focus request queued until the webview reports 'ready'.
+  let pendingFocus: { tab: string; stream?: string } | null = null;
+  const flushFocus = () => {
+    if (dashboardPanel && pendingFocus) {
+      void dashboardPanel.webview.postMessage({ type: 'focus', ...pendingFocus } satisfies OutboundMessage);
+      pendingFocus = null;
+    }
+  };
+
+  const ensureDashboard = (): boolean => {
+    if (dashboardPanel) {
+      dashboardPanel.reveal();
+      return true;
+    }
+    dashboardPanel = vscode.window.createWebviewPanel('natsLensDashboard', 'NATS Lens', vscode.ViewColumn.Active, {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+      localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')],
+    });
+    dashboardPanel.webview.html = dashboardHtml(dashboardPanel.webview, context.extensionUri);
+    dashboardPanel.onDidDispose(() => {
+      for (const sub of dashboardSubs.values()) sub.unsubscribe();
+      dashboardSubs.clear();
+      dashboardPanel = undefined;
+    });
+    dashboardPanel.webview.onDidReceiveMessage(async (msg: InboundMessage) => {
+      const post = (m: OutboundMessage) => void dashboardPanel?.webview.postMessage(m);
+      try {
+        switch (msg.type) {
+          case 'ready':
+          case 'refresh':
+            await postModel();
+            await postServerInfo();
+            post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+            flushFocus();
+            break;
+          case 'publish': {
+            const { headers, errors } = parseHeaders(msg.headers ?? '');
+            if (errors.length) {
+              post({ type: 'error', message: `invalid headers — ${errors.join('; ')}` });
+              break;
+            }
+            client.publish(msg.subject, msg.payload, headers);
+            post({ type: 'reply', ok: true, text: `published to ${msg.subject}` });
+            break;
+          }
+          case 'request': {
+            const reply = await client.request(msg.subject, msg.payload);
+            post({ type: 'reply', ok: true, text: reply });
+            break;
+          }
+          case 'subscribe': {
+            if (dashboardSubs.has(msg.subject)) break;
+            const sub = client.subscribe(msg.subject, (subj, data) => {
+              if (msg.filter && !subjectMatches(msg.filter, subj)) return;
+              const { text } = previewPayload(data, 2000);
+              post({ type: 'message', message: { subject: subj, ts: new Date().toISOString(), body: text } });
+            });
+            dashboardSubs.set(msg.subject, sub);
+            post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+            break;
+          }
+          case 'unsubscribe': {
+            dashboardSubs.get(msg.subject)?.unsubscribe();
+            dashboardSubs.delete(msg.subject);
+            post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
+            break;
+          }
+          case 'readMessage': {
+            const selector = msg.seq !== undefined ? { seq: msg.seq } : { lastBySubject: msg.lastBySubject ?? '' };
+            const stored = await client.getStreamMessage(msg.stream, selector);
+            post({ type: 'messageDoc', ...formatStoredMessage(stored) });
+            break;
+          }
+        }
+      } catch (err) {
+        post({ type: 'error', message: String(err) });
+      }
+    });
+    return false;
+  };
+
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('natsLens.explorer', tree),
     status,
@@ -408,79 +510,50 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand('natsLens.openDashboard', () => {
-      if (dashboardPanel) {
-        dashboardPanel.reveal();
-        return;
-      }
-      dashboardPanel = vscode.window.createWebviewPanel(
-        'natsLensDashboard',
-        'NATS Lens',
-        vscode.ViewColumn.Active,
-        {
-          enableScripts: true,
-          retainContextWhenHidden: true,
-          localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'dist')],
-        }
-      );
-      dashboardPanel.webview.html = dashboardHtml(dashboardPanel.webview, context.extensionUri);
-      dashboardPanel.onDidDispose(() => {
-        for (const sub of dashboardSubs.values()) sub.unsubscribe();
-        dashboardSubs.clear();
-        dashboardPanel = undefined;
-      });
-      dashboardPanel.webview.onDidReceiveMessage(async (msg: InboundMessage) => {
-        const post = (m: OutboundMessage) => void dashboardPanel?.webview.postMessage(m);
+      ensureDashboard();
+    }),
+
+    vscode.commands.registerCommand('natsLens.openStreamInDashboard', (node?: { stream?: StreamSummary }) => {
+      const stream = node?.stream?.name;
+      if (!stream) return;
+      pendingFocus = { tab: 'Overview', stream };
+      const existed = ensureDashboard();
+      if (existed) flushFocus(); // already mounted → send now; otherwise 'ready' will flush
+    }),
+
+    vscode.commands.registerCommand('natsLens.exportOverview', async () => {
+      let streams: StreamRow[] = [];
+      let kvBuckets: string[] = [];
+      let osBuckets: string[] = [];
+      if (client.connectionState === 'connected') {
         try {
-          switch (msg.type) {
-            case 'ready':
-            case 'refresh':
-              await postModel();
-              post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
-              break;
-            case 'publish': {
-              const { headers, errors } = parseHeaders(msg.headers ?? '');
-              if (errors.length) {
-                post({ type: 'error', message: `invalid headers — ${errors.join('; ')}` });
-                break;
-              }
-              client.publish(msg.subject, msg.payload, headers);
-              post({ type: 'reply', ok: true, text: `published to ${msg.subject}` });
-              break;
-            }
-            case 'request': {
-              const reply = await client.request(msg.subject, msg.payload);
-              post({ type: 'reply', ok: true, text: reply });
-              break;
-            }
-            case 'subscribe': {
-              if (dashboardSubs.has(msg.subject)) break;
-              const sub = client.subscribe(msg.subject, (subj, data) => {
-                if (msg.filter && !subjectMatches(msg.filter, subj)) return;
-                const { text } = previewPayload(data, 2000);
-                post({ type: 'message', message: { subject: subj, ts: new Date().toISOString(), body: text } });
-              });
-              dashboardSubs.set(msg.subject, sub);
-              post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
-              break;
-            }
-            case 'unsubscribe': {
-              dashboardSubs.get(msg.subject)?.unsubscribe();
-              dashboardSubs.delete(msg.subject);
-              post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });
-              break;
-            }
-            case 'readMessage': {
-              const selector =
-                msg.seq !== undefined ? { seq: msg.seq } : { lastBySubject: msg.lastBySubject ?? '' };
-              const stored = await client.getStreamMessage(msg.stream, selector);
-              post({ type: 'messageDoc', ...formatStoredMessage(stored) });
-              break;
-            }
-          }
-        } catch (err) {
-          post({ type: 'error', message: String(err) });
+          streams = (await client.streams()).map((s) => ({ name: s.name, messages: s.messages }));
+        } catch {
+          /* ignore */
         }
-      });
+        try {
+          kvBuckets = (await client.kvBuckets()).map((b) => b.bucket);
+        } catch {
+          /* ignore */
+        }
+        try {
+          osBuckets = (await client.osBuckets()).map((b) => b.bucket);
+        } catch {
+          /* ignore */
+        }
+      }
+      const md = overviewMarkdown(
+        buildDashboardModel({
+          connectionState: client.connectionState,
+          context: client.context?.name ?? null,
+          streams,
+          kvBuckets,
+          osBuckets,
+          subscriptions: subs.map.size,
+        })
+      );
+      const doc = await vscode.workspace.openTextDocument({ content: md, language: 'markdown' });
+      await vscode.window.showTextDocument(doc, { preview: true });
     }),
 
     vscode.commands.registerCommand('natsLens.connect', async (name?: string) => {

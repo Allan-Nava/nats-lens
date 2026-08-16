@@ -18,6 +18,8 @@ export function App({
   messages,
   subscriptions,
   messageDoc,
+  serverInfo,
+  focus,
   error,
   initialTab,
   onTabChange,
@@ -28,6 +30,8 @@ export function App({
   messages: LiveMessage[];
   subscriptions: string[];
   messageDoc: { title: string; body: string } | null;
+  serverInfo: { server: string; version: string; rttMs: number } | null;
+  focus: { tab: string; stream?: string } | null;
   error: string | null;
   initialTab?: string;
   onTabChange?: (tab: string) => void;
@@ -40,6 +44,11 @@ export function App({
     onTabChange?.(t);
   };
 
+  // NL-39: react to a focus request from the extension (open a stream).
+  React.useEffect(() => {
+    if (focus && (TABS as readonly string[]).includes(focus.tab)) setTab(focus.tab as Tab);
+  }, [focus]);
+
   return (
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b border-border px-4 py-2">
@@ -50,6 +59,11 @@ export function App({
         <h1 className="text-sm font-semibold">
           NATS Lens{model?.context ? ` — ${model.context}` : ''}
         </h1>
+        {serverInfo && (
+          <span className="text-xs text-muted">
+            {serverInfo.server} v{serverInfo.version} · {serverInfo.rttMs.toFixed(1)} ms
+          </span>
+        )}
         <nav className="ml-auto flex gap-1">
           {TABS.map((t) => (
             <button
@@ -78,7 +92,7 @@ export function App({
             </CardValue>
           </Card>
         ) : tab === 'Overview' ? (
-          <OverviewTab model={model} send={send} messageDoc={messageDoc} />
+          <OverviewTab model={model} send={send} messageDoc={messageDoc} focusStream={focus?.stream} />
         ) : tab === 'Publish' ? (
           <PublishTab send={send} reply={reply} />
         ) : tab === 'Subscribe' ? (

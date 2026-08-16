@@ -84,6 +84,14 @@
         "icon": "$(sort-precedence)"
       },
       {
+        "command": "natsLens.openStreamInDashboard",
+        "title": "NATS Lens: Open Stream in Dashboard"
+      },
+      {
+        "command": "natsLens.exportOverview",
+        "title": "NATS Lens: Export Overview"
+      },
+      {
         "command": "natsLens.connect",
         "title": "NATS Lens: Connect to Context"
       },
@@ -230,6 +238,10 @@
           "command": "natsLens.purgeStream",
           "when": "view == natsLens.explorer && viewItem == stream",
           "group": "inline"
+        },
+        {
+          "command": "natsLens.openStreamInDashboard",
+          "when": "view == natsLens.explorer && viewItem == stream"
         },
         {
           "command": "natsLens.updateConsumer",

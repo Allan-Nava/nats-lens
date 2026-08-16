@@ -20,7 +20,7 @@ import {
 import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
 import { validateJson, JsonSchema } from '../src/core/schema';
-import { buildDashboardModel } from '../src/core/dashboard';
+import { buildDashboardModel, overviewMarkdown } from '../src/core/dashboard';
 import { streamTooltip, matchesFilter, sortStreams } from '../src/core/tree';
 import { NatsClient } from '../src/core/client';
 
@@ -201,6 +201,23 @@ await test('dashboard: view-model carries lists and derives totals (NL-24/NL-28)
   assert.strictEqual(down.connected, false);
   assert.deepStrictEqual(down.streams, []);
   assert.deepStrictEqual(down.totals, { streams: 0, kvBuckets: 0, osBuckets: 0, subscriptions: 0 });
+});
+
+await test('dashboard: overviewMarkdown renders a report (NL-37)', () => {
+  const md = overviewMarkdown(
+    buildDashboardModel({
+      connectionState: 'connected',
+      context: 'prod',
+      streams: [{ name: 'ORDERS', messages: 12 }],
+      kvBuckets: ['CONFIG'],
+      osBuckets: [],
+    })
+  );
+  assert.match(md, /# NATS Lens/);
+  assert.match(md, /prod/);
+  assert.match(md, /ORDERS/);
+  assert.match(md, /12/);
+  assert.match(md, /CONFIG/);
 });
 
 await test('tree: stream tooltip includes name, subjects and counts (NL-30)', () => {

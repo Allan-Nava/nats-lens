@@ -4,11 +4,15 @@ import type { Send } from '../App';
 import { Card, CardTitle, CardValue } from '../components/ui/card';
 import { Button, Input, Label } from '../components/ui/controls';
 
-function ReadMessage({ model, send }: { model: DashboardModel; send: Send }) {
-  const [stream, setStream] = React.useState(model.streams[0]?.name ?? '');
+function ReadMessage({ model, send, focusStream }: { model: DashboardModel; send: Send; focusStream?: string }) {
+  const [stream, setStream] = React.useState(focusStream ?? model.streams[0]?.name ?? '');
   const [mode, setMode] = React.useState<'seq' | 'subj'>('seq');
   const [seq, setSeq] = React.useState('1');
   const [subject, setSubject] = React.useState('');
+
+  React.useEffect(() => {
+    if (focusStream) setStream(focusStream);
+  }, [focusStream]);
 
   const go = () => {
     if (!stream) return;
@@ -68,10 +72,12 @@ export function OverviewTab({
   model,
   send,
   messageDoc,
+  focusStream,
 }: {
   model: DashboardModel;
   send: Send;
   messageDoc: { title: string; body: string } | null;
+  focusStream?: string;
 }) {
   return (
     <div className="flex flex-col gap-4">
@@ -94,7 +100,7 @@ export function OverviewTab({
         </Card>
       </section>
 
-      {model.streams.length > 0 && <ReadMessage model={model} send={send} />}
+      {model.streams.length > 0 && <ReadMessage model={model} send={send} focusStream={focusStream} />}
 
       {messageDoc && (
         <Card>
