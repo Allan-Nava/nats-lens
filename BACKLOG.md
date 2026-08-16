@@ -80,3 +80,9 @@ shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con n
 - [x] **NL-37 — Export overview**: core `overviewMarkdown(model)` (report Markdown) + comando **Export Overview** che apre il report come documento.
 - [x] **NL-38 — Server info & RTT**: server name/version + round-trip time nell'header della dashboard (bridge `serverInfo`, `client.rtt`).
 - [x] **NL-39 — Open in Dashboard dai nodi**: comando **Open Stream in Dashboard** su un nodo stream → apre la dashboard e precompila la lettura messaggi su quello stream (bridge `focus`, con flush differito al `ready`).
+
+## v1.10 — Reliability & validation
+
+- [x] **NL-40 — Health da RTT**: core `rttHealth(ms)`; RTT misurato periodicamente → colore status bar + RTT colorato nell'header dashboard.
+- [x] **NL-41 — Subject schema registry**: impostazione `natsLens.schemas`; core `schemaForSubject` (wildcard, più specifico vince) + validazione live dei messaggi nel tab Subscribe (✓/✗).
+- [x] **NL-42 — Message rate**: core `messageRate(timestamps, windowMs, now)`; msg/s mostrato nel tab Subscribe.

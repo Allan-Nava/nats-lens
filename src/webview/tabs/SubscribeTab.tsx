@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Send } from '../App';
 import type { LiveMessage } from '../../core/dashboard';
+import { messageRate } from '../../core/stats';
 import { Button, Input, Label } from '../components/ui/controls';
 import { Card, CardTitle } from '../components/ui/card';
 
@@ -49,7 +50,12 @@ export function SubscribeTab({
       )}
 
       <Card className="min-h-0 flex-1">
-        <CardTitle>Live messages</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Live messages</CardTitle>
+          <span className="text-xs text-muted">
+            {messageRate(messages.map((m) => Date.parse(m.ts)), 1000, Date.now())} msg/s
+          </span>
+        </div>
         <div className="mt-2 flex flex-col gap-1 font-mono text-xs">
           {messages.length === 0 ? (
             <span className="text-muted">In attesa di messaggi…</span>
@@ -57,6 +63,9 @@ export function SubscribeTab({
             messages.map((m, i) => (
               <div key={i} className="border-t border-border py-1">
                 <span className="text-muted">{m.ts.slice(11, 19)} </span>
+                {m.valid !== undefined && (
+                  <span className={m.valid ? 'text-ok' : 'text-warn'}>{m.valid ? '✓' : '✗'} </span>
+                )}
                 <span className="text-accent">{m.subject}</span> {m.body}
               </div>
             ))

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { DashboardModel, InboundMessage, LiveMessage } from '../core/dashboard';
 import { Card, CardTitle, CardValue } from './components/ui/card';
+import { rttHealth } from '../core/health';
 import { OverviewTab } from './tabs/OverviewTab';
 import { PublishTab } from './tabs/PublishTab';
 import { SubscribeTab } from './tabs/SubscribeTab';
@@ -61,7 +62,10 @@ export function App({
         </h1>
         {serverInfo && (
           <span className="text-xs text-muted">
-            {serverInfo.server} v{serverInfo.version} · {serverInfo.rttMs.toFixed(1)} ms
+            {serverInfo.server} v{serverInfo.version} ·{' '}
+            <span className={rttHealth(serverInfo.rttMs) === 'slow' ? 'text-warn' : 'text-ok'}>
+              {serverInfo.rttMs.toFixed(1)} ms
+            </span>
           </span>
         )}
         <nav className="ml-auto flex gap-1">

@@ -3,6 +3,8 @@
 // unit-tested. Deliberately not a full JSON Schema implementation — the
 // runtime dependency policy is "nats only".
 
+import { subjectMatches } from './payload';
+
 export interface JsonSchema {
   type?: 'string' | 'number' | 'integer' | 'boolean' | 'object' | 'array' | 'null';
   required?: string[];
@@ -35,6 +37,31 @@ function matchesType(v: unknown, t: NonNullable<JsonSchema['type']>): boolean {
     default:
       return true;
   }
+}
+
+export interface SchemaEntry {
+  subject: string;
+  schema: JsonSchema;
+}
+
+function specificity(pattern: string): number {
+  let score = 0;
+  for (const tok of pattern.split('.')) {
+    if (tok === '>') score -= 1;
+    else if (tok !== '*') score += 2;
+  }
+  return score;
+}
+
+/**
+ * Picks the schema whose subject pattern matches `subject` (NATS wildcards),
+ * preferring the most specific pattern. Returns null if none match (NL-41).
+ */
+export function schemaForSubject(subject: string, entries: SchemaEntry[]): JsonSchema | null {
+  const matches = entries
+    .filter((e) => subjectMatches(e.subject, subject))
+    .sort((a, b) => specificity(b.subject) - specificity(a.subject));
+  return matches[0]?.schema ?? null;
 }
 
 /** Validates `value` against `schema`, returning a list of errors (empty = valid). */

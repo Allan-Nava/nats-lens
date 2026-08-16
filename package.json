@@ -299,6 +299,19 @@
           ],
           "default": "name",
           "description": "Sort JetStream streams in the tree by name (A→Z) or message count (high→low)."
+        },
+        "natsLens.schemas": {
+          "type": "array",
+          "default": [],
+          "description": "Subject → JSON Schema registry for live validation of subscribed messages.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "subject": { "type": "string", "description": "Subject pattern (NATS wildcards * and >)." },
+              "schema": { "type": "object", "description": "JSON Schema (subset: type/required/properties/items/enum)." }
+            },
+            "required": ["subject", "schema"]
+          }
         }
       }
     }

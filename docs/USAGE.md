@@ -164,6 +164,8 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 - **Server info**: l'header della dashboard mostra server name/versione e round-trip time.
 - **Open Stream in Dashboard**: dal menu di uno stream apri la dashboard con la lettura messaggi già puntata su quello stream.
 - **Export Overview**: genera un report Markdown dello stato (Streams/KV/Object Store) come documento.
+- **Health**: la status bar cambia colore se il round-trip time è alto; il tab Subscribe mostra i **msg/s**.
+- **Validazione live**: se un messaggio combacia con uno schema in `natsLens.schemas`, il tab Subscribe mostra ✓/✗.
 - **Status bar** cliccabile → **Quick Actions** (menu rapido: Dashboard, Connect, Publish, Subscribe, Filter…).
 - **Filter Tree** (icona filtro nella toolbar): filtra context/stream/bucket per nome; lo stato di espansione dei nodi è ricordato.
 - Quando non c'è alcun context, la view mostra una **welcome** con i pulsanti per connetterti.
@@ -209,6 +211,8 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 |---|---|---|
 | `natsLens.contextsDir` | `""` | Cartella dei context CLI. Vuoto = `~/.config/nats/context`. |
 | `natsLens.extraServers` | `[]` | URL server extra (`nats://host:4222`) mostrati accanto ai context. |
+| `natsLens.streamSort` | `name` | Ordinamento stream nel tree: `name` o `messages`. |
+| `natsLens.schemas` | `[]` | Registry subject→JSON Schema per la validazione live (`{subject, schema}`). |
 
 ---
 

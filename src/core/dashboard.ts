@@ -94,6 +94,8 @@ export interface LiveMessage {
   subject: string;
   ts: string;
   body: string;
+  /** NL-41: validation outcome against a matching registered schema, if any. */
+  valid?: boolean;
 }
 
 /** Messages the extension host sends to the webview. */

@@ -15,7 +15,8 @@ import {
 } from './core/payload';
 import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
-import { validateJson, JsonSchema } from './core/schema';
+import { validateJson, JsonSchema, schemaForSubject, SchemaEntry } from './core/schema';
+import { rttHealth } from './core/health';
 import { buildDashboardModel, overviewMarkdown, InboundMessage, OutboundMessage, StreamRow } from './core/dashboard';
 
 type Node =
@@ -289,13 +290,18 @@ export function activate(context: vscode.ExtensionContext): void {
   const tree = new NatsTree(client, subs);
 
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 89);
+  let lastRtt = -1; // NL-40: latest measured round-trip time (ms), -1 = unknown
   const updateStatus = () => {
     const name = client.context?.name;
+    status.color = undefined;
     switch (client.connectionState) {
-      case 'connected':
+      case 'connected': {
+        const health = rttHealth(lastRtt);
         status.text = `$(broadcast) ${name}`;
-        status.tooltip = `NATS Lens — connected to ${name}`;
+        status.tooltip = `NATS Lens — connected to ${name}${lastRtt >= 0 ? ` · ${lastRtt.toFixed(1)} ms (${health})` : ''}`;
+        if (health === 'slow') status.color = new vscode.ThemeColor('statusBarItem.warningForeground');
         break;
+      }
       case 'reconnecting':
         status.text = '$(sync~spin) NATS: reconnecting…';
         status.tooltip = `NATS Lens — lost connection to ${name}, reconnecting…`;
@@ -314,7 +320,7 @@ export function activate(context: vscode.ExtensionContext): void {
     updateStatus();
     tree.refresh();
     void postModel();
-    void postServerInfo();
+    void measureHealth();
   });
 
   // NL-8/NL-18: subscription helpers shared by the subscribe command, session
@@ -387,6 +393,23 @@ export function activate(context: vscode.ExtensionContext): void {
     } satisfies OutboundMessage);
   };
 
+  // NL-40: periodically measure RTT → status bar health color + dashboard.
+  const measureHealth = async () => {
+    if (client.connectionState !== 'connected') {
+      lastRtt = -1;
+    } else {
+      try {
+        lastRtt = await client.rtt();
+      } catch {
+        lastRtt = -1;
+      }
+    }
+    updateStatus();
+    void postServerInfo();
+  };
+  const healthTimer = setInterval(() => void measureHealth(), 10000);
+  context.subscriptions.push({ dispose: () => clearInterval(healthTimer) });
+
   // NL-39: a focus request queued until the webview reports 'ready'.
   let pendingFocus: { tab: string; stream?: string } | null = null;
   const flushFocus = () => {
@@ -443,7 +466,18 @@ export function activate(context: vscode.ExtensionContext): void {
             const sub = client.subscribe(msg.subject, (subj, data) => {
               if (msg.filter && !subjectMatches(msg.filter, subj)) return;
               const { text } = previewPayload(data, 2000);
-              post({ type: 'message', message: { subject: subj, ts: new Date().toISOString(), body: text } });
+              // NL-41: validate against a registered schema for this subject, if any.
+              let valid: boolean | undefined;
+              const entries = vscode.workspace.getConfiguration('natsLens').get<SchemaEntry[]>('schemas', []);
+              const schema = schemaForSubject(subj, entries);
+              if (schema) {
+                try {
+                  valid = validateJson(JSON.parse(new TextDecoder().decode(data)), schema).length === 0;
+                } catch {
+                  valid = false;
+                }
+              }
+              post({ type: 'message', message: { subject: subj, ts: new Date().toISOString(), body: text, valid } });
             });
             dashboardSubs.set(msg.subject, sub);
             post({ type: 'subscriptions', subjects: [...dashboardSubs.keys()] });

@@ -19,7 +19,9 @@ import {
 } from '../src/core/payload';
 import { parseHeaders } from '../src/core/headers';
 import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscriptions';
-import { validateJson, JsonSchema } from '../src/core/schema';
+import { validateJson, JsonSchema, schemaForSubject } from '../src/core/schema';
+import { rttHealth } from '../src/core/health';
+import { messageRate } from '../src/core/stats';
 import { buildDashboardModel, overviewMarkdown } from '../src/core/dashboard';
 import { streamTooltip, matchesFilter, sortStreams } from '../src/core/tree';
 import { NatsClient } from '../src/core/client';
@@ -226,6 +228,29 @@ await test('tree: stream tooltip includes name, subjects and counts (NL-30)', ()
   assert.match(md, /orders\.>/);
   assert.match(md, /12/);
   assert.match(md, /2/); // consumers
+});
+
+await test('health: rttHealth classifies by thresholds (NL-40)', () => {
+  assert.strictEqual(rttHealth(5), 'good');
+  assert.strictEqual(rttHealth(120), 'slow');
+  assert.strictEqual(rttHealth(-1), 'down');
+});
+
+await test('schema: schemaForSubject matches by NATS wildcard, most specific wins (NL-41)', () => {
+  const entries = [
+    { subject: 'orders.>', schema: { type: 'object' as const } },
+    { subject: 'orders.new', schema: { type: 'object' as const, required: ['id'] } },
+  ];
+  assert.deepStrictEqual(schemaForSubject('orders.new', entries)?.required, ['id']);
+  assert.ok(schemaForSubject('orders.cancel', entries)); // falls back to orders.>
+  assert.strictEqual(schemaForSubject('other.subj', entries), null);
+});
+
+await test('stats: messageRate counts events within the window (NL-42)', () => {
+  const now = 10_000;
+  const ts = [now - 500, now - 900, now - 3000]; // 2 within 1s window
+  assert.strictEqual(messageRate(ts, 1000, now), 2);
+  assert.strictEqual(messageRate([], 1000, now), 0);
 });
 
 await test('tree: matchesFilter is case-insensitive substring, empty = all (NL-31)', () => {
