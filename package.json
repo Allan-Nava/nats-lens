@@ -2,7 +2,7 @@
   "name": "nats-lens",
   "displayName": "NATS Lens",
   "description": "NATS client inside VS Code: connect via your nats CLI contexts, publish/subscribe/request on subjects, browse JetStream streams and consumers.",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "publisher": "allannava95",
   "license": "MIT",
   "icon": "media/icon.png",

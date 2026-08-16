@@ -1,3 +1,10 @@
+## [1.9.0] — 2026-07-28
+
+### Aggiunto
+- **Export Overview** (NL-37): report Markdown dello stato (Streams/KV/Object Store) come documento. Core `overviewMarkdown`.
+- **Server info & RTT** (NL-38): l'header della dashboard mostra server name/versione e round-trip time.
+- **Open Stream in Dashboard** (NL-39): dal menu di uno stream, apre la dashboard con la lettura messaggi già puntata su quello stream.
+
 ## [1.8.0] — 2026-07-28
 
 ### Aggiunto
