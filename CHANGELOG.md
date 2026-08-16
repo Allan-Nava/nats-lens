@@ -1,3 +1,10 @@
+## [1.10.0] — 2026-07-28
+
+### Aggiunto
+- **Health da RTT** (NL-40): il round-trip time viene misurato periodicamente; la status bar cambia colore quando è alto e l'header della dashboard mostra l'RTT colorato. Core `rttHealth`.
+- **Subject schema registry** (NL-41): impostazione `natsLens.schemas` (pattern subject → JSON Schema); i messaggi sottoscritti sono validati live (✓/✗) nel tab Subscribe. Core `schemaForSubject`.
+- **Message rate** (NL-42): msg/s nel tab Subscribe. Core `messageRate`.
+
 ## [1.9.0] — 2026-07-28
 
 ### Aggiunto
