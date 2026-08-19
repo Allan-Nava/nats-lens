@@ -29,13 +29,14 @@ jobs:
             let currentMilestone = null
             const milestones = {}
 
-            const milestoneRe = /^##\s+Milestone:\s*(.+)$/
-            const itemRe = /^- \[ \]\s+(NL-\d+):\s+([^\u2014\-–—]+)(?:[\u2014\-–—]\s*(.*))?$/
+            const milestoneRe = /^##\s+(?:Milestone:\s*)?(.+?)\s*$/
+            const itemRe = /^- \[ \]\s+\*\*(NL-\d+)\s*[\u2014\-–—]\s+(.+?)\*\*:?\s*(.*)$/
+            const legacyItemRe = /^- \[ \]\s+(NL-\d+):\s+(.+?)(?:\s+[\u2014\-–—]\s*(.*))?$/
 
             for (const l of lines) {
               const m = l.match(milestoneRe)
               if (m) { currentMilestone = m[1].trim(); milestones[currentMilestone] = []; continue }
-              const it = l.match(itemRe)
+              const it = l.match(itemRe) || l.match(legacyItemRe)
               if (it && currentMilestone) {
                 const id = it[1].trim()
                 const title = it[2].trim()

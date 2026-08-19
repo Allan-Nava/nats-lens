@@ -57,6 +57,11 @@ La logica nuova va nel core con relativo test.
 | `build` | dopo test+type-check | bundle + controllo dimensione |
 | `package` | tag `v*` | `.vsix` allegato alla release GitHub |
 | `publish-marketplace` | tag `v*` | `vsce publish` con `secrets.VSCE_TOKEN` (env `marketplace`) |
+| `dependency-review` | pull request | blocca dipendenze con vulnerabilità note |
+| `codeql` | push/PR + settimanale | analisi statica JavaScript/TypeScript |
+
+Il workflow `backlog-sync.yml` sincronizza le voci non completate di `BACKLOG.md` con
+issue e milestone GitHub, includendo sia il formato corrente `## v1.x` sia il formato storico.
 
 ## Rilascio
 

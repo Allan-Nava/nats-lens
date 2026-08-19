@@ -5,6 +5,7 @@
 
 ### Implementato
 - **Gestione stream** (NL-43): creazione, modifica ed eliminazione di stream JetStream con subjects, retention, storage e limiti messaggi; le eliminazioni richiedono doppia conferma.
+- **Workflow di sviluppo**: backlog sync compatibile con il formato corrente, dependency review sulle pull request e scansione CodeQL periodica per JavaScript/TypeScript.
 
 ## [1.11.0] — 2026-08-19
 

@@ -41,7 +41,7 @@ function parseRepoFromPackageJson() {
     .replace(/^git:/, 'https:')
   try {
     const url = new URL(normalized)
-    const [, owner, repoName] = url.pathname.split('/').filter(Boolean)
+    const [owner, repoName] = url.pathname.split('/').filter(Boolean)
     return owner && repoName ? `${owner}/${repoName}` : null
   } catch (err) {
     return null
@@ -54,13 +54,14 @@ function parseBacklog(content) {
   let current = null
 
   for (const line of lines) {
-    const milestoneMatch = line.match(/^##\s+Milestone:\s*(.+)$/)
+    const milestoneMatch = line.match(/^##\s+(?:Milestone:\s*)?(.+?)\s*$/)
     if (milestoneMatch) {
       current = { title: milestoneMatch[1].trim(), items: [] }
       milestones.push(current)
       continue
     }
-    const itemMatch = line.match(/^\s*- \[ \]\s+(NL-\d+):\s+(.+?)(?:\s+[—–-]\s*(.*))?$/)
+    const itemMatch = line.match(/^\s*- \[ \]\s+\*\*(NL-\d+)\s*[—–-]\s+(.+?)\*\*:?\s*(.*)$/)
+      || line.match(/^\s*- \[ \]\s+(NL-\d+):\s+(.+?)(?:\s+[—–-]\s*(.*))?$/)
     if (itemMatch && current) {
       current.items.push({ id: itemMatch[1], title: itemMatch[2].trim(), desc: (itemMatch[3] || '').trim() })
     }
