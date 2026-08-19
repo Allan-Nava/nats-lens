@@ -30,6 +30,18 @@ export interface StreamSummary {
   messages: number;
   bytes: number;
   consumers: number;
+  retention: 'limits' | 'interest' | 'workqueue';
+  storage: 'file' | 'memory';
+}
+
+export interface StreamConfigInput {
+  name: string;
+  subjects: string[];
+  retention?: 'limits' | 'interest' | 'workqueue';
+  storage?: 'file' | 'memory';
+  maxMsgs?: number;
+  maxBytes?: number;
+  maxAgeMs?: number;
 }
 
 export interface ConsumerSummary {
@@ -199,9 +211,51 @@ export class NatsClient {
         messages: si.state.messages,
         bytes: si.state.bytes,
         consumers: si.state.consumer_count,
+        retention: String(si.config.retention ?? 'limits') as StreamSummary['retention'],
+        storage: String(si.config.storage ?? 'file') as StreamSummary['storage'],
       });
     }
     return result.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  async addStream(cfg: StreamConfigInput): Promise<StreamSummary> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    await jsm.streams.add({
+      name: cfg.name,
+      subjects: cfg.subjects,
+      retention: cfg.retention as never,
+      storage: cfg.storage as never,
+      max_msgs: cfg.maxMsgs,
+      max_bytes: cfg.maxBytes,
+      max_age: cfg.maxAgeMs === undefined ? undefined : cfg.maxAgeMs * 1_000_000,
+    });
+    const created = (await this.streams()).find((stream) => stream.name === cfg.name);
+    if (!created) throw new Error(`stream ${cfg.name} was not created`);
+    return created;
+  }
+
+  async updateStream(name: string, changes: Omit<Partial<StreamConfigInput>, 'name'>): Promise<StreamSummary> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    const info = await jsm.streams.info(name);
+    const config = { ...info.config };
+    if (changes.subjects !== undefined) config.subjects = changes.subjects;
+    if (changes.retention !== undefined) config.retention = changes.retention as never;
+    if (changes.storage !== undefined) config.storage = changes.storage as never;
+    if (changes.maxMsgs !== undefined) config.max_msgs = changes.maxMsgs;
+    if (changes.maxBytes !== undefined) config.max_bytes = changes.maxBytes;
+    if (changes.maxAgeMs !== undefined) config.max_age = changes.maxAgeMs * 1_000_000;
+    await jsm.streams.update(name, config);
+    const updated = (await this.streams()).find((stream) => stream.name === name);
+    if (!updated) throw new Error(`stream ${name} was not updated`);
+    return updated;
+  }
+
+  async deleteStream(name: string): Promise<boolean> {
+    this.assertConnected();
+    const jsm = await this.nc!.jetstreamManager();
+    return jsm.streams.delete(name);
   }
 
   async consumers(stream: string): Promise<ConsumerSummary[]> {

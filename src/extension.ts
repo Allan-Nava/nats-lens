@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as https from 'https';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
-import { NatsClient, StreamSummary, ConsumerSummary } from './core/client';
+import { NatsClient, StreamSummary, ConsumerSummary, StreamConfigInput } from './core/client';
 import { streamTooltip, consumerTooltip, matchesFilter, sortStreams, StreamSort } from './core/tree';
 import {
   formatMessageLine,
@@ -779,6 +779,97 @@ export function activate(context: vscode.ExtensionContext): void {
         subs.stop(subject);
         persistSubs();
         tree.refresh();
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.createStream', async () => {
+      const name = await vscode.window.showInputBox({
+        prompt: 'JetStream stream name',
+        validateInput: (value) => (/^[A-Za-z0-9_-]+$/.test(value.trim()) ? undefined : 'use letters, numbers, _ or -'),
+      });
+      if (!name) return;
+      const subjectsInput = await vscode.window.showInputBox({
+        prompt: `Subjects for "${name}" (comma-separated)`,
+        validateInput: (value) => {
+          const subjects = value.split(',').map((subject) => subject.trim()).filter(Boolean);
+          return subjects.length && subjects.every((subject) => isValidSubject(subject, true))
+            ? undefined
+            : 'enter one or more valid NATS subjects';
+        },
+      });
+      if (!subjectsInput) return;
+      const retention = await vscode.window.showQuickPick(['limits', 'interest', 'workqueue'], {
+        placeHolder: 'Retention policy',
+      });
+      if (!retention) return;
+      const storage = await vscode.window.showQuickPick(['file', 'memory'], { placeHolder: 'Storage type' });
+      if (!storage) return;
+      const maxMsgs = await vscode.window.showInputBox({
+        prompt: 'Maximum messages (empty = unlimited)',
+        validateInput: (value) => (!value.trim() || /^\d+$/.test(value.trim()) ? undefined : 'non-negative integer'),
+      });
+      if (maxMsgs === undefined) return;
+      const cfg: StreamConfigInput = {
+        name: name.trim(),
+        subjects: subjectsInput.split(',').map((subject) => subject.trim()).filter(Boolean),
+        retention: retention as StreamConfigInput['retention'],
+        storage: storage as StreamConfigInput['storage'],
+        maxMsgs: maxMsgs.trim() ? Number(maxMsgs.trim()) : undefined,
+      };
+      try {
+        await client.addStream(cfg);
+        void vscode.window.showInformationMessage(`NATS: created stream ${cfg.name}`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS create stream failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.updateStream', async (node?: { stream?: StreamSummary }) => {
+      const stream = node?.stream;
+      if (!stream) return;
+      const subjectsInput = await vscode.window.showInputBox({
+        prompt: `Subjects for "${stream.name}" (comma-separated)`,
+        value: stream.subjects.join(', '),
+        validateInput: (value) => {
+          const subjects = value.split(',').map((subject) => subject.trim()).filter(Boolean);
+          return subjects.length && subjects.every((subject) => isValidSubject(subject, true))
+            ? undefined
+            : 'enter one or more valid NATS subjects';
+        },
+      });
+      if (!subjectsInput) return;
+      const retention = await vscode.window.showQuickPick(['limits', 'interest', 'workqueue'], {
+        placeHolder: `Retention policy (current: ${stream.retention})`,
+      });
+      if (!retention) return;
+      const storage = await vscode.window.showQuickPick(['file', 'memory'], {
+        placeHolder: `Storage type (current: ${stream.storage})`,
+      });
+      if (!storage) return;
+      try {
+        await client.updateStream(stream.name, {
+          subjects: subjectsInput.split(',').map((subject) => subject.trim()).filter(Boolean),
+          retention: retention as StreamConfigInput['retention'],
+          storage: storage as StreamConfigInput['storage'],
+        });
+        void vscode.window.showInformationMessage(`NATS: updated stream ${stream.name}`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS update stream failed — ${err}`);
+      }
+    }),
+
+    vscode.commands.registerCommand('natsLens.deleteStream', async (node?: { stream?: StreamSummary }) => {
+      const name = node?.stream?.name;
+      if (!name) return;
+      if (!(await confirmDestructive(`Delete stream "${name}"? Tutti i messaggi e consumer verranno eliminati.`, 'Delete'))) return;
+      try {
+        await client.deleteStream(name);
+        void vscode.window.showInformationMessage(`NATS: deleted stream ${name}`);
+        tree.refresh();
+      } catch (err) {
+        void vscode.window.showErrorMessage(`NATS delete stream failed — ${err}`);
       }
     }),
 

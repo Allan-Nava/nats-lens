@@ -101,6 +101,15 @@ Da connesso, espandi **JetStream** nel tree:
 - **Stream** → nome, `N msg · dimensione · subjects`.
 - Espandi uno stream → **consumer** con `pending` e `ack pending`.
 
+### Gestire gli stream
+
+Command Palette → **NATS Lens: Create Stream** per creare uno stream indicando nome,
+subjects, retention policy (`limits`, `interest`, `workqueue`), storage (`file`, `memory`)
+e limite messaggi opzionale. Dal menu contestuale di uno stream usa **Modify Stream** per
+aggiornare subjects, retention e storage, oppure **Delete Stream** per eliminarlo dopo due
+conferme. JetStream può rifiutare alcune transizioni di retention o storage: l'errore viene
+mostrato senza modificare lo stream.
+
 ### Leggere i messaggi di uno stream
 Dal menu contestuale di uno stream (icona documento) o Command Palette → **NATS Lens: Read Stream Message**:
 

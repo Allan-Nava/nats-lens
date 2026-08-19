@@ -224,7 +224,15 @@ await test('dashboard: overviewMarkdown renders a report (NL-37)', () => {
 });
 
 await test('tree: stream tooltip includes name, subjects and counts (NL-30)', () => {
-  const md = streamTooltip({ name: 'ORDERS', subjects: ['orders.>'], messages: 12, bytes: 2048, consumers: 2 });
+  const md = streamTooltip({
+    name: 'ORDERS',
+    subjects: ['orders.>'],
+    messages: 12,
+    bytes: 2048,
+    consumers: 2,
+    retention: 'limits',
+    storage: 'file',
+  });
   assert.match(md, /ORDERS/);
   assert.match(md, /orders\.>/);
   assert.match(md, /12/);
@@ -362,6 +370,28 @@ try {
     const consumers = await client.consumers('LENS');
     assert.strictEqual(consumers[0].name, 'worker');
     assert.strictEqual(consumers[0].pending, 1);
+  });
+
+  await test('integration: create, update and delete stream (NL-43)', async () => {
+    const created = await client.addStream({
+      name: 'MANAGED',
+      subjects: ['lens.managed.>'],
+      retention: 'limits',
+      storage: 'memory',
+      maxMsgs: 100,
+    });
+    assert.strictEqual(created.name, 'MANAGED');
+    assert.deepStrictEqual(created.subjects, ['lens.managed.>']);
+
+    const updated = await client.updateStream('MANAGED', {
+      subjects: ['lens.managed.updated.>'],
+      maxMsgs: 200,
+    });
+    assert.deepStrictEqual(updated.subjects, ['lens.managed.updated.>']);
+    assert.strictEqual(updated.messages, 0);
+
+    assert.strictEqual(await client.deleteStream('MANAGED'), true);
+    assert.ok(!(await client.streams()).some((stream) => stream.name === 'MANAGED'));
   });
 
   await test('integration: read stream message by seq and last-by-subject (NL-12)', async () => {

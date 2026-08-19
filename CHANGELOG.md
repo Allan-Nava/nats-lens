@@ -3,6 +3,9 @@
 ### Pianificato
 - **Milestone v1.12 — Future features**: gestione completa degli stream (NL-43), gestione consumer avanzata (NL-44), KV watch e storico revisioni (NL-45), Object Store avanzato (NL-46), dashboard metrics (NL-47) e preview raw/base64 nell'inspector (NL-48).
 
+### Implementato
+- **Gestione stream** (NL-43): creazione, modifica ed eliminazione di stream JetStream con subjects, retention, storage e limiti messaggi; le eliminazioni richiedono doppia conferma.
+
 ## [1.11.0] — 2026-08-19
 
 ### Aggiunto

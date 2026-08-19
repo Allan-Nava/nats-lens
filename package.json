@@ -121,6 +121,21 @@
         "icon": "$(go-to-file)"
       },
       {
+        "command": "natsLens.createStream",
+        "title": "NATS Lens: Create Stream",
+        "icon": "$(add)"
+      },
+      {
+        "command": "natsLens.updateStream",
+        "title": "NATS Lens: Modify Stream",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "natsLens.deleteStream",
+        "title": "NATS Lens: Delete Stream",
+        "icon": "$(trash)"
+      },
+      {
         "command": "natsLens.addConsumer",
         "title": "NATS Lens: Create Consumer",
         "icon": "$(add)"
@@ -234,6 +249,16 @@
         },
         {
           "command": "natsLens.readMessage",
+          "when": "view == natsLens.explorer && viewItem == stream",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.updateStream",
+          "when": "view == natsLens.explorer && viewItem == stream",
+          "group": "inline"
+        },
+        {
+          "command": "natsLens.deleteStream",
           "when": "view == natsLens.explorer && viewItem == stream",
           "group": "inline"
         },
