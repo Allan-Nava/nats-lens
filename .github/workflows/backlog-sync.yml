@@ -14,7 +14,7 @@ jobs:
       issues: write
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Sync BACKLOG.md to Issues & Milestones
         uses: actions/github-script@v6
