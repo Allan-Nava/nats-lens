@@ -90,7 +90,7 @@ jobs:
       - run: npm ci
       - run: npx @vscode/vsce package --no-dependencies
       - name: Upload .vsix to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: "*.vsix"
       - uses: actions/upload-artifact@v4
