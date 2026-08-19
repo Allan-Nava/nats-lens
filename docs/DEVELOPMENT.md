@@ -74,6 +74,17 @@ La telemetria è disattivata di default. Per abilitarla serve configurare
 Telemetry**. Il client invia solo conteggi aggregati di operazioni riuscite; non raccoglie
 subject, payload, URL dei server o credenziali.
 
+## Roadmap v1.12
+
+La prossima milestone pianificata è **v1.12 — Future features**:
+
+- gestione completa degli stream, inclusi retention e storage;
+- pausa/ripresa, ack/nack, reset e replay dei consumer;
+- watch live e storico revisioni per KV;
+- delete, metadata e download a multiparti per Object Store;
+- auto-refresh, filtri e grafici di throughput nella dashboard;
+- preview raw/base64 nell'inspector.
+
 ## Documentazione
 
 Il sito che stai leggendo è servito da `docs/` (Jekyll) e ri-deployato a ogni push su `main`

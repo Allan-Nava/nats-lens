@@ -86,3 +86,12 @@ shadcn vanno adattati al tema VS Code (`var(--vscode-*)`), niente CDN (CSP con n
 - [x] **NL-40 — Health da RTT**: core `rttHealth(ms)`; RTT misurato periodicamente → colore status bar + RTT colorato nell'header dashboard.
 - [x] **NL-41 — Subject schema registry**: impostazione `natsLens.schemas`; core `schemaForSubject` (wildcard, più specifico vince) + validazione live dei messaggi nel tab Subscribe (✓/✗).
 - [x] **NL-42 — Message rate**: core `messageRate(timestamps, windowMs, now)`; msg/s mostrato nel tab Subscribe.
+
+## v1.12 — Future features
+
+- [ ] **NL-43 — Gestione completa degli stream**: comandi e core per creare, modificare ed eliminare stream, configurando subjects, retention policy e storage type con conferme per le operazioni distruttive.
+- [ ] **NL-44 — Gestione consumer avanzata**: pausa/ripresa, ack/nack, reset del consumer e replay controllato dei messaggi, con stato e azioni disponibili dal tree e dalla dashboard.
+- [ ] **NL-45 — KV watch e storico revisioni**: watch live delle modifiche a un bucket/chiave e consultazione delle revisioni precedenti con apertura del valore come documento.
+- [ ] **NL-46 — Object Store avanzato**: eliminazione oggetti, visualizzazione metadata e download gestito a multiparti per oggetti grandi, con conferma sulle eliminazioni.
+- [ ] **NL-47 — Dashboard metrics**: auto-refresh configurabile, filtri su stream/KV/Object Store e grafici di throughput e message rate senza inviare dati fuori dall’endpoint NATS.
+- [ ] **NL-48 — Inspector raw preview**: preview raw/base64 direttamente nel message inspector, con selezione del formato e gestione esplicita dei payload binari.
