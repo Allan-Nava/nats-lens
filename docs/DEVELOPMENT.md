@@ -66,6 +66,13 @@ La logica nuova va nel core con relativo test.
 
 Prerequisiti Marketplace: publisher `allannava95` e secret `VSCE_TOKEN` (PAT Azure DevOps con
 scope *Marketplace → Manage*). Verifica con `npx @vscode/vsce verify-pat allannava95`.
+Il job `publish-marketplace` fallisce se `VSCE_TOKEN` manca, così un tag non può risultare
+pubblicato senza aver eseguito davvero il rilascio.
+
+La telemetria è disattivata di default. Per abilitarla serve configurare
+`natsLens.telemetryEndpoint` con un URL HTTPS e confermare il comando **Enable Anonymous
+Telemetry**. Il client invia solo conteggi aggregati di operazioni riuscite; non raccoglie
+subject, payload, URL dei server o credenziali.
 
 ## Documentazione
 

@@ -15,6 +15,7 @@
 - **JetStream browser** — streams with message/byte counts and subjects; expand a stream to see its consumers with pending/ack-pending counts.
 - **Subscribe** — any subject (wildcards `*` and `>` supported): messages stream into a dedicated Output channel, JSON payloads pretty-printed, headers shown, binary detected. Active subscriptions are listed in the tree and can be stopped individually.
 - **Publish / Request** — quick input boxes with subject validation; request replies open as a document.
+- **Privacy-first telemetry** — anonymous operation counts are disabled by default and require explicit consent plus a configured HTTPS endpoint.
 
 ## Commands
 
@@ -33,6 +34,13 @@
 |---|---|---|
 | `natsLens.contextsDir` | `~/.config/nats/context` | Where the CLI context JSON files live |
 | `natsLens.extraServers` | `[]` | Extra `nats://` URLs shown alongside the contexts |
+| `natsLens.telemetryEndpoint` | `""` | HTTPS endpoint for anonymous aggregate counts; empty disables sending |
+
+Telemetry is **off by default**. Configure an HTTPS endpoint, then use
+`NATS Lens: Enable Anonymous Telemetry` to give explicit consent. The extension sends
+only counts of successful connect, publish, request, subscribe and dashboard actions;
+it never sends subjects, payloads, server URLs or credentials. Disable it with
+`NATS Lens: Disable Anonymous Telemetry`.
 
 ## Development
 

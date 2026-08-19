@@ -51,6 +51,11 @@ description: Client NATS dentro VS Code — context CLI, publish/subscribe/reque
     <p>Le label sono sempre oscurate (es. <code>nats://host:4222 (user app)</code>): password e token non finiscono mai nell'UI o nei log.</p>
   </div>
   <div class="card">
+    <div class="ico">📊</div>
+    <h3>Telemetria facoltativa</h3>
+    <p>Disattivata di default: richiede consenso esplicito e invia solo conteggi aggregati via endpoint HTTPS configurato.</p>
+  </div>
+  <div class="card">
     <div class="ico">🪶</div>
     <h3>Leggera</h3>
     <p>Bundle esbuild, unica dipendenza runtime <code>nats</code>. Nessun binario esterno richiesto.</p>

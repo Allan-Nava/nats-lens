@@ -115,9 +115,9 @@ jobs:
       - name: Publish to Marketplace
         run: |
           if [[ -z "${{ secrets.VSCE_TOKEN }}" ]]; then
-            echo "⚠️  VSCE_TOKEN not configured. Skipping marketplace publish."
+            echo "❌ VSCE_TOKEN not configured. Configure it before pushing a release tag."
             echo "📋 Setup: https://github.com/Allan-Nava/nats-lens/settings/secrets/actions"
-            exit 0
+            exit 1
           fi
           npx @vscode/vsce publish --pat "${{ secrets.VSCE_TOKEN }}" --no-dependencies
       - name: Publish success

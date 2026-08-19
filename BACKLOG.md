@@ -13,7 +13,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 
 ## Rilascio
 
-- [ ] **NL-6 — Publish sul Marketplace**: pipeline tag-driven pronta (`ci.yml`, allineata ad ansible-vars-lens). Restano: secret `VSCE_PAT`, verifica publisher, screenshot/GIF nel README, tag `vX.Y.Z`.
+- [ ] **NL-6 — Publish sul Marketplace**: pipeline tag-driven pronta (`ci.yml`, allineata ad ansible-vars-lens) e ora fail-fast se manca `VSCE_TOKEN`. Restano: configurazione del secret, verifica publisher, screenshot/GIF nel README, tag `vX.Y.Z`.
 
 ## v1.2 — Messaging power tools (fatto)
 
@@ -36,7 +36,7 @@ Un workflow GitHub Actions (`backlog-sync.yml`) sincronizza questo file con Issu
 - [x] **NL-17 — Schema validation**: `validateJson()` (subset JSON Schema: type/required/properties/items/enum, dependency-free); comando **Validate JSON against Schema** sull'editor attivo. Preview raw/base64: follow-up.
 - [x] **NL-18 — Export/Import subscriptions**: core `serializeSubscriptions`/`parseSubscriptions` (JSON versionato, subject validati); comandi **Export/Import Subscriptions** su file.
 - [x] **NL-19 — Credential helper UI**: comando **Connect with Token…** — token mascherato all'input, tenuto solo in memoria, mai persistito né loggato. (Persistenza sicura via SecretStorage: follow-up.)
-- [ ] **NL-20 — Telemetria opt-in**: *non implementata di proposito.* Richiederebbe un endpoint di raccolta e una decisione di prodotto su privacy/consenso; non aggiungo codice che trasmette dati senza quel design. Da riaprire con una scelta esplicita.
+- [ ] **NL-20 — Telemetria opt-in**: infrastruttura implementata ma disattivata di default. Richiede un endpoint HTTPS di raccolta approvato e il consenso esplicito dell'utente; invia solo conteggi aggregati di operazioni riuscite, mai subject, payload, URL o credenziali.
 
 ## v1.6 — Inspector & consumer tuning
 

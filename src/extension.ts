@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as https from 'https';
 import { Subscription } from 'nats';
 import { loadContexts, redactedLabel, NatsContext } from './core/contexts';
 import { NatsClient, StreamSummary, ConsumerSummary } from './core/client';
@@ -17,6 +18,7 @@ import { parseHeaders } from './core/headers';
 import { serializeSubscriptions, parseSubscriptions } from './core/subscriptions';
 import { validateJson, JsonSchema, schemaForSubject, SchemaEntry } from './core/schema';
 import { rttHealth } from './core/health';
+import { aggregateTelemetry, telemetryPayload, TelemetryEvent } from './core/telemetry';
 import { buildDashboardModel, overviewMarkdown, InboundMessage, OutboundMessage, StreamRow } from './core/dashboard';
 
 type Node =
@@ -288,6 +290,41 @@ export function activate(context: vscode.ExtensionContext): void {
   const client = new NatsClient();
   const subs = new ActiveSubs();
   const tree = new NatsTree(client, subs);
+  const telemetryEnabledKey = 'natsLens.telemetry.enabled';
+  const telemetryVersion = String(context.extension.packageJSON.version ?? 'unknown');
+  const telemetryEvents: TelemetryEvent[] = [];
+  let telemetryEnabled = context.globalState.get<boolean>(telemetryEnabledKey, false);
+  const track = (event: TelemetryEvent): void => {
+    if (!telemetryEnabled) return;
+    telemetryEvents.push(event);
+    if (telemetryEvents.length >= 20) void flushTelemetry();
+  };
+  const flushTelemetry = async (): Promise<void> => {
+    if (!telemetryEnabled || telemetryEvents.length === 0) return;
+    const endpoint = vscode.workspace.getConfiguration('natsLens').get<string>('telemetryEndpoint', '').trim();
+    if (!endpoint) return;
+    let target: URL;
+    try {
+      target = new URL(endpoint);
+    } catch {
+      return;
+    }
+    if (target.protocol !== 'https:') return;
+    const events = telemetryEvents.splice(0, telemetryEvents.length);
+    const body = JSON.stringify(telemetryPayload(telemetryVersion, aggregateTelemetry(events)));
+    await new Promise<void>((resolve) => {
+      const request = https.request(
+        target,
+        { method: 'POST', headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) } },
+        (response) => {
+          response.resume();
+          response.once('end', resolve);
+        }
+      );
+      request.once('error', resolve);
+      request.end(body);
+    });
+  };
 
   const status = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 89);
   let lastRtt = -1; // NL-40: latest measured round-trip time (ms), -1 = unknown
@@ -544,7 +581,32 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
 
     vscode.commands.registerCommand('natsLens.openDashboard', () => {
+      track('dashboard');
       ensureDashboard();
+    }),
+
+    vscode.commands.registerCommand('natsLens.enableTelemetry', async () => {
+      const endpoint = vscode.workspace.getConfiguration('natsLens').get<string>('telemetryEndpoint', '').trim();
+      if (!endpoint || !endpoint.startsWith('https://')) {
+        void vscode.window.showErrorMessage('NATS telemetry requires an HTTPS endpoint in natsLens.telemetryEndpoint.');
+        return;
+      }
+      const choice = await vscode.window.showWarningMessage(
+        'Enable anonymous NATS Lens usage counts? Only successful operation counts are sent; subjects, payloads, URLs and credentials are never collected.',
+        { modal: true },
+        'Enable telemetry'
+      );
+      if (choice !== 'Enable telemetry') return;
+      telemetryEnabled = true;
+      await context.globalState.update(telemetryEnabledKey, true);
+      void vscode.window.showInformationMessage('NATS Lens telemetry enabled.');
+    }),
+
+    vscode.commands.registerCommand('natsLens.disableTelemetry', async () => {
+      await flushTelemetry();
+      telemetryEnabled = false;
+      await context.globalState.update(telemetryEnabledKey, false);
+      void vscode.window.showInformationMessage('NATS Lens telemetry disabled.');
     }),
 
     vscode.commands.registerCommand('natsLens.openStreamInDashboard', (node?: { stream?: StreamSummary }) => {
@@ -612,6 +674,7 @@ export function activate(context: vscode.ExtensionContext): void {
         void vscode.window.showInformationMessage(
           `NATS: connected to ${ctx.name}${info ? ` (server ${info.server} v${info.version})` : ''}`
         );
+        track('connect');
         // NL-8: restore subscriptions persisted from a previous session.
         const saved = context.workspaceState.get<string[]>(SUBS_KEY, []);
         let restored = 0;
@@ -661,6 +724,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
       try {
         client.publish(subject, payload, headers);
+        track('publish');
         void vscode.window.setStatusBarMessage(`NATS: published to ${subject}`, 3000);
       } catch (err) {
         void vscode.window.showErrorMessage(`NATS publish failed — ${err}`);
@@ -674,6 +738,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (payload === undefined) return;
       try {
         const reply = await client.request(subject, payload);
+        track('request');
         const doc = await vscode.workspace.openTextDocument({ content: reply, language: 'json' });
         await vscode.window.showTextDocument(doc, { preview: true });
       } catch (err) {
@@ -694,6 +759,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (filter === undefined) return;
       try {
         subscribeTo(subject, filter || undefined);
+        track('subscribe');
         subs.map.get(subject)?.channel.show(true);
         persistSubs();
         tree.refresh();
@@ -1132,6 +1198,7 @@ export function activate(context: vscode.ExtensionContext): void {
     dispose: () => {
       subs.stopAll();
       void client.disconnect();
+      void flushTelemetry();
     },
   });
 }

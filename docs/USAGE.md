@@ -170,6 +170,16 @@ attivo in base64 o esadecimale (utile per contenuti binari).
 - **Filter Tree** (icona filtro nella toolbar): filtra context/stream/bucket per nome; lo stato di espansione dei nodi è ricordato.
 - Quando non c'è alcun context, la view mostra una **welcome** con i pulsanti per connetterti.
 
+### Telemetria anonima (facoltativa)
+
+La telemetria è **disattivata di default**. Per abilitarla, configura prima
+`natsLens.telemetryEndpoint` con un endpoint `https://` gestito dal progetto, poi esegui
+**NATS Lens: Enable Anonymous Telemetry** e conferma nella finestra modale.
+Vengono inviati solo conteggi aggregati delle operazioni riuscite (connect, publish, request,
+subscribe e apertura dashboard), insieme alla versione dell'estensione. Non vengono mai inviati
+subject, payload, URL dei server o credenziali. Usa **NATS Lens: Disable Anonymous Telemetry**
+per revocare il consenso.
+
 ## 6. Comandi (riassunto)
 
 | Comando | Cosa fa |

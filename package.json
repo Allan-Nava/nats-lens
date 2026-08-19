@@ -2,7 +2,7 @@
   "name": "nats-lens",
   "displayName": "NATS Lens",
   "description": "NATS client inside VS Code: connect via your nats CLI contexts, publish/subscribe/request on subjects, browse JetStream streams and consumers.",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "publisher": "allannava95",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -170,6 +170,14 @@
         "title": "NATS Lens: Connect with Token…"
       },
       {
+        "command": "natsLens.enableTelemetry",
+        "title": "NATS Lens: Enable Anonymous Telemetry"
+      },
+      {
+        "command": "natsLens.disableTelemetry",
+        "title": "NATS Lens: Disable Anonymous Telemetry"
+      },
+      {
         "command": "natsLens.inspectPayload",
         "title": "NATS Lens: Inspect Payload as base64/hex"
       },
@@ -321,6 +329,11 @@
               "schema"
             ]
           }
+        },
+        "natsLens.telemetryEndpoint": {
+          "type": "string",
+          "default": "",
+          "description": "HTTPS endpoint for anonymous, opt-in aggregate usage counts. Empty = no telemetry endpoint."
         }
       }
     }

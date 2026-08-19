@@ -1,3 +1,11 @@
+## [1.11.0] — 2026-08-19
+
+### Aggiunto
+- **Telemetria opt-in** (NL-20): raccolta anonima e aggregata dei conteggi di operazioni riuscite, disattivata di default. L'invio richiede consenso esplicito, un endpoint HTTPS configurato e non include subject, payload, URL o credenziali.
+
+### Modificato
+- **Pubblicazione Marketplace** (NL-6): la pipeline fallisce esplicitamente se `VSCE_TOKEN` manca, invece di considerare la pubblicazione saltata come riuscita.
+
 ## [1.10.0] — 2026-07-28
 
 ### Aggiunto

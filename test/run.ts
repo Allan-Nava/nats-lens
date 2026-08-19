@@ -22,6 +22,7 @@ import { serializeSubscriptions, parseSubscriptions } from '../src/core/subscrip
 import { validateJson, JsonSchema, schemaForSubject } from '../src/core/schema';
 import { rttHealth } from '../src/core/health';
 import { messageRate } from '../src/core/stats';
+import { aggregateTelemetry, telemetryPayload } from '../src/core/telemetry';
 import { buildDashboardModel, overviewMarkdown } from '../src/core/dashboard';
 import { streamTooltip, matchesFilter, sortStreams } from '../src/core/tree';
 import { NatsClient } from '../src/core/client';
@@ -251,6 +252,16 @@ await test('stats: messageRate counts events within the window (NL-42)', () => {
   const ts = [now - 500, now - 900, now - 3000]; // 2 within 1s window
   assert.strictEqual(messageRate(ts, 1000, now), 2);
   assert.strictEqual(messageRate([], 1000, now), 0);
+});
+
+await test('telemetry: aggregates allowlisted event names without sensitive values (NL-20)', () => {
+  const events = aggregateTelemetry(['publish', 'publish', 'secret-subject', 'connect', 'publish']);
+  assert.deepStrictEqual(events, { connect: 1, publish: 3 });
+  assert.deepStrictEqual(telemetryPayload('1.10.0', events), {
+    version: '1.10.0',
+    events: { connect: 1, publish: 3 },
+  });
+  assert.ok(!JSON.stringify(events).includes('secret-subject'));
 });
 
 await test('tree: matchesFilter is case-insensitive substring, empty = all (NL-31)', () => {
