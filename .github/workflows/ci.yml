@@ -70,7 +70,7 @@ jobs:
           if [ $SIZE_KB -gt 1024 ]; then
             echo "⚠️  Warning: bundle > 1 MB"
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -93,7 +93,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: "*.vsix"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vsix
           path: "*.vsix"
